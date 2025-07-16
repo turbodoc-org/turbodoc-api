@@ -1,20 +1,26 @@
 {
-	"name": "turbodoc-api",
-	"type": "module",
-	"scripts": {
-		"dev": "vite",
-		"build": "vite build",
-		"preview": "vite build && wrangler pages dev",
-		"deploy": "npm run build && wrangler pages deploy",
-		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
-	},
-	"dependencies": {
-		"hono": "^4.8.5"
-	},
-	"devDependencies": {
-		"@hono/vite-build": "^1.2.0",
-		"@hono/vite-dev-server": "^0.18.2",
-		"vite": "^6.3.5",
-		"wrangler": "^4.24.4"
-	}
+  "name": "turbodoc-api",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite build && wrangler pages dev",
+    "deploy": "npm run build && wrangler pages deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "dependencies": {
+    "@hono/swagger-ui": "0.5.2",
+    "@supabase/supabase-js": "2.51.0",
+    "chanfana": "2.8.1",
+    "hono": "4.8.5",
+    "zod": "4.0.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.1.1",
+    "@hono/vite-build": "1.2.0",
+    "@hono/vite-dev-server": "0.18.2",
+    "supabase": "2.31.4",
+    "vite": "6.3.5",
+    "wrangler": "4.24.4"
+  }
 }
