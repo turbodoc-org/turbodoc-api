@@ -1,12 +1,59 @@
-import { Hono } from 'hono'
-import { renderer } from './renderer'
+import { Hono } from "hono";
+import { fromHono } from "chanfana";
+import { requireAuth } from "./utils/auth/middleware";
+import { HTTPException } from "hono/http-exception";
+import { GetBookmarks } from "./endpoints/v1/bookmarks/getBookmarks";
+import { CreateBookmark } from "./endpoints/v1/bookmarks/createBookmark";
+import { UpdateBookmark } from "./endpoints/v1/bookmarks/updateBookmark";
+import { DeleteBookmark } from "./endpoints/v1/bookmarks/deleteBookmark";
+import { Env } from "./types/app-context";
 
-const app = new Hono<{ Bindings: CloudflareBindings }>();
+// Start a Hono app
+const app = new Hono<{ Bindings: Env }>();
 
-app.use(renderer)
+// Setup OpenAPI registry
+const openapi = fromHono(app, {
+  docs_url: "/",
+  openapi_url: "/swagger.json",
+  schema: {
+    info: {
+      title: "Turbodoc API",
+      version: "1.0.0",
+      description: "API for Turbodoc bookmark management application",
+    },
+  },
+});
 
-app.get('/', (c) => {
-  return c.render(<h1>Hello!</h1>)
-})
+app.onError((e, c) => {
+  // TODO: refine error handling
+  console.error("Error in Hono:", JSON.stringify(e));
+  if (e instanceof HTTPException && e.status < 500) {
+    return c.json(
+      {
+        status: e.status,
+        message: e.message,
+      },
+      { status: e.status },
+    );
+  }
 
-export default app
+  return c.json(
+    {
+      status: 500,
+      message: "Internal server error",
+    },
+    { status: 500 },
+  );
+});
+
+// Apply auth middleware to all routes
+app.use("*", requireAuth);
+
+// Register bookmark endpoints
+openapi.get("/bookmarks", GetBookmarks);
+openapi.post("/bookmarks", CreateBookmark);
+openapi.put("/bookmarks/:id", UpdateBookmark);
+openapi.delete("/bookmarks/:id", DeleteBookmark);
+
+// Export the Hono app
+export default app;
