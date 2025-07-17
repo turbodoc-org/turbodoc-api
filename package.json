@@ -6,6 +6,8 @@
     "build": "vite build",
     "preview": "vite build && wrangler pages dev",
     "deploy": "npm run build && wrangler pages deploy",
+    "format": "npx @biomejs/biome format --write",
+    "migrate": "npx supabase migration up --linked",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {

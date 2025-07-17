@@ -40,3 +40,4 @@ lerna-debug.log*
 .env.keys
 .env.local
 .env.*.local
+CLAUDE.md
