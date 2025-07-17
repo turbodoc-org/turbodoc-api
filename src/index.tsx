@@ -50,10 +50,10 @@ app.onError((e, c) => {
 app.use("*", requireAuth);
 
 // Register bookmark endpoints
-openapi.get("/bookmarks", GetBookmarks);
-openapi.post("/bookmarks", CreateBookmark);
-openapi.put("/bookmarks/:id", UpdateBookmark);
-openapi.delete("/bookmarks/:id", DeleteBookmark);
+openapi.get("/v1/bookmarks", GetBookmarks);
+openapi.post("/v1/bookmarks", CreateBookmark);
+openapi.put("/v1/bookmarks/:id", UpdateBookmark);
+openapi.delete("/v1/bookmarks/:id", DeleteBookmark);
 
 // Export the Hono app
 export default app;
