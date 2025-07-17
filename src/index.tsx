@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { fromHono } from "chanfana";
 import { requireAuth } from "./utils/auth/middleware";
 import { HTTPException } from "hono/http-exception";
@@ -10,6 +11,36 @@ import { Env } from "./types/app-context";
 
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>();
+
+// Setup CORS middleware
+app.use(
+  "*",
+  cors({
+    origin: (origin) => {
+      // Allow requests from iOS app (no origin header)
+      if (!origin) return null;
+
+      const allowedOrigins = [
+        "http://localhost:3000", // Local development
+        "https://turbodoc.ai", // Production domain
+        "https://www.turbodoc.ai", // WWW subdomain
+      ];
+
+      return origin && allowedOrigins.includes(origin)
+        ? origin
+        : allowedOrigins[0];
+    },
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "token",
+      "Baggage",
+      "sentry-trace",
+    ],
+    credentials: true,
+  }),
+);
 
 // Setup OpenAPI registry
 const openapi = fromHono(app, {
