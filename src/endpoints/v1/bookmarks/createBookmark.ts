@@ -119,7 +119,7 @@ export class CreateBookmark extends OpenAPIRoute {
         user_id: user.id,
         title,
         url,
-        time_added: Date.now(),
+        time_added: Math.floor(Date.now() / 1000),
         tags,
         status,
       };
