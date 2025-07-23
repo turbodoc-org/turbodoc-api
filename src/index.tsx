@@ -8,6 +8,7 @@ import { CreateBookmark } from "./endpoints/v1/bookmarks/createBookmark";
 import { UpdateBookmark } from "./endpoints/v1/bookmarks/updateBookmark";
 import { DeleteBookmark } from "./endpoints/v1/bookmarks/deleteBookmark";
 import { GetOgImage } from "./endpoints/v1/bookmarks/getOgImage";
+import { SearchBookmarks } from "./endpoints/v1/bookmarks/searchBookmarks";
 import { Env } from "./types/app-context";
 
 // Start a Hono app
@@ -83,6 +84,7 @@ app.use("*", requireAuth);
 
 // Register bookmark endpoints
 openapi.get("/v1/bookmarks", GetBookmarks);
+openapi.get("/v1/bookmarks/search", SearchBookmarks);
 openapi.post("/v1/bookmarks", CreateBookmark);
 openapi.put("/v1/bookmarks/:id", UpdateBookmark);
 openapi.delete("/v1/bookmarks/:id", DeleteBookmark);
