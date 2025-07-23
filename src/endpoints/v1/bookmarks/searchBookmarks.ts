@@ -93,7 +93,7 @@ export class SearchBookmarks extends OpenAPIRoute {
       const authToken = c.get("authToken");
       const supabase = supabaseApiClient(authToken, c);
 
-      const { q: query } = c.req.valid("query");
+      const query = c.req.query("q");
 
       if (!query || query.trim().length === 0) {
         throw new HTTPException(400, { message: "Search query is required" });
