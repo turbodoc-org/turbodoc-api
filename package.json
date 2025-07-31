@@ -8,6 +8,7 @@
     "deploy": "npm run build && wrangler pages deploy",
     "format": "npx @biomejs/biome format --write",
     "migrate": "npx supabase migration up --linked",
+    "gen-db-types": "npx supabase gen types typescript --linked --schema public > src/types/database.types.ts",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {

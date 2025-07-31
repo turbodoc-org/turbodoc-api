@@ -9,6 +9,11 @@ import { UpdateBookmark } from "./endpoints/v1/bookmarks/updateBookmark";
 import { DeleteBookmark } from "./endpoints/v1/bookmarks/deleteBookmark";
 import { GetOgImage } from "./endpoints/v1/bookmarks/getOgImage";
 import { SearchBookmarks } from "./endpoints/v1/bookmarks/searchBookmarks";
+import { GetNotes } from "./endpoints/v1/notes/getNotes";
+import { GetNote } from "./endpoints/v1/notes/getNote";
+import { CreateNote } from "./endpoints/v1/notes/createNote";
+import { UpdateNote } from "./endpoints/v1/notes/updateNote";
+import { DeleteNote } from "./endpoints/v1/notes/deleteNote";
 import { Env } from "./types/app-context";
 
 // Start a Hono app
@@ -89,6 +94,13 @@ openapi.post("/v1/bookmarks", CreateBookmark);
 openapi.put("/v1/bookmarks/:id", UpdateBookmark);
 openapi.delete("/v1/bookmarks/:id", DeleteBookmark);
 openapi.get("/v1/bookmarks/og-image", GetOgImage);
+
+// Register notes endpoints
+openapi.get("/v1/notes", GetNotes);
+openapi.get("/v1/notes/:id", GetNote);
+openapi.post("/v1/notes", CreateNote);
+openapi.put("/v1/notes/:id", UpdateNote);
+openapi.delete("/v1/notes/:id", DeleteNote);
 
 // Export the Hono app
 export default app;
