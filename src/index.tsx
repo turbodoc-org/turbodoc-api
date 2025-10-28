@@ -14,6 +14,7 @@ import { GetNote } from "./endpoints/v1/notes/getNote";
 import { CreateNote } from "./endpoints/v1/notes/createNote";
 import { UpdateNote } from "./endpoints/v1/notes/updateNote";
 import { DeleteNote } from "./endpoints/v1/notes/deleteNote";
+import { GetTags } from "./endpoints/v1/tags/getTags";
 import { Env } from "./types/app-context";
 
 // Start a Hono app
@@ -101,6 +102,9 @@ openapi.get("/v1/notes/:id", GetNote);
 openapi.post("/v1/notes", CreateNote);
 openapi.put("/v1/notes/:id", UpdateNote);
 openapi.delete("/v1/notes/:id", DeleteNote);
+
+// Register tags endpoints
+openapi.get("/v1/tags", GetTags);
 
 // Export the Hono app
 export default app;
