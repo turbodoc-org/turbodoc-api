@@ -86,7 +86,7 @@ export class GetTags extends OpenAPIRoute {
       const sortedTags = Array.from(tagCounts.entries())
         .map(([tag, count]) => ({ tag, count }))
         .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
+        .slice(0, 25);
 
       return c.json({ data: sortedTags });
     } catch (error) {
