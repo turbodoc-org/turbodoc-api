@@ -28,9 +28,9 @@ app.use(
       if (!origin) return null;
 
       const allowedOrigins = [
-        "http://localhost:3000", // Local development
         "https://turbodoc.ai", // Production domain
         "https://www.turbodoc.ai", // WWW subdomain
+        "http://localhost:3000", // Local development
       ];
 
       return origin && allowedOrigins.includes(origin)
