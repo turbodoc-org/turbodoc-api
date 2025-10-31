@@ -7,7 +7,7 @@ export type Json =
   | Json[];
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)";
@@ -47,6 +47,60 @@ export type Database = {
           updated_at?: string | null;
           url?: string;
           user_id?: string;
+        };
+        Relationships: [];
+      };
+      code_snippets: {
+        Row: {
+          background_type: string;
+          background_value: string;
+          code: string;
+          created_at: string;
+          font_family: string;
+          font_size: number;
+          id: string;
+          language: string;
+          padding: number;
+          show_line_numbers: boolean;
+          theme: string;
+          title: string | null;
+          updated_at: string;
+          user_id: string;
+          window_style: string;
+        };
+        Insert: {
+          background_type?: string;
+          background_value?: string;
+          code: string;
+          created_at?: string;
+          font_family?: string;
+          font_size?: number;
+          id?: string;
+          language?: string;
+          padding?: number;
+          show_line_numbers?: boolean;
+          theme?: string;
+          title?: string | null;
+          updated_at?: string;
+          user_id: string;
+          window_style?: string;
+        };
+        Update: {
+          background_type?: string;
+          background_value?: string;
+          code?: string;
+          created_at?: string;
+          font_family?: string;
+          font_size?: number;
+          id?: string;
+          language?: string;
+          padding?: number;
+          show_line_numbers?: boolean;
+          theme?: string;
+          title?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          window_style?: string;
         };
         Relationships: [];
       };

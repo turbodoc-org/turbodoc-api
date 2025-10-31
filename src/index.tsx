@@ -15,6 +15,10 @@ import { CreateNote } from "./endpoints/v1/notes/createNote";
 import { UpdateNote } from "./endpoints/v1/notes/updateNote";
 import { DeleteNote } from "./endpoints/v1/notes/deleteNote";
 import { GetTags } from "./endpoints/v1/tags/getTags";
+import { GetCodeSnippets } from "./endpoints/v1/code-snippets/getCodeSnippets";
+import { CreateCodeSnippet } from "./endpoints/v1/code-snippets/createCodeSnippet";
+import { UpdateCodeSnippet } from "./endpoints/v1/code-snippets/updateCodeSnippet";
+import { DeleteCodeSnippet } from "./endpoints/v1/code-snippets/deleteCodeSnippet";
 import { Env } from "./types/app-context";
 
 // Start a Hono app
@@ -105,6 +109,12 @@ openapi.delete("/v1/notes/:id", DeleteNote);
 
 // Register tags endpoints
 openapi.get("/v1/tags", GetTags);
+
+// Register code snippets endpoints
+openapi.get("/v1/code-snippets", GetCodeSnippets);
+openapi.post("/v1/code-snippets", CreateCodeSnippet);
+openapi.put("/v1/code-snippets/:id", UpdateCodeSnippet);
+openapi.delete("/v1/code-snippets/:id", DeleteCodeSnippet);
 
 // Export the Hono app
 export default app;
