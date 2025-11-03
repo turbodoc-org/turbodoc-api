@@ -113,6 +113,7 @@ export type Database = {
           title: string;
           updated_at: string | null;
           user_id: string;
+          version: number;
         };
         Insert: {
           content?: string;
@@ -122,6 +123,7 @@ export type Database = {
           title?: string;
           updated_at?: string | null;
           user_id: string;
+          version?: number;
         };
         Update: {
           content?: string;
@@ -131,6 +133,7 @@ export type Database = {
           title?: string;
           updated_at?: string | null;
           user_id?: string;
+          version?: number;
         };
         Relationships: [];
       };

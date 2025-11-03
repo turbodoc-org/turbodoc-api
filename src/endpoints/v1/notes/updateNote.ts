@@ -24,6 +24,10 @@ export class UpdateNote extends OpenAPIRoute {
                   .optional()
                   .describe("Content of the note (can include whitespace)"),
                 tags: z.string().optional().describe("Comma-separated tags"),
+                version: z
+                  .number()
+                  .optional()
+                  .describe("Current version number for optimistic locking"),
               })
               .describe("Note update request"),
           },
@@ -49,6 +53,9 @@ export class UpdateNote extends OpenAPIRoute {
                       .string()
                       .nullable()
                       .describe("Comma-separated tags"),
+                    version: z
+                      .number()
+                      .describe("Version number for optimistic locking"),
                     created_at: z
                       .string()
                       .nullable()
@@ -71,6 +78,29 @@ export class UpdateNote extends OpenAPIRoute {
             schema: z.object({
               status: z.number(),
               message: z.string(),
+            }),
+          },
+        },
+      },
+      "409": {
+        description: "Version conflict - note was modified by another client",
+        content: {
+          "application/json": {
+            schema: z.object({
+              status: z.number(),
+              message: z.string(),
+              data: z
+                .object({
+                  id: z.string(),
+                  user_id: z.string(),
+                  title: z.string(),
+                  content: z.string(),
+                  tags: z.string().nullable(),
+                  version: z.number(),
+                  created_at: z.string().nullable(),
+                  updated_at: z.string().nullable(),
+                })
+                .describe("Current server version of the note"),
             }),
           },
         },
@@ -108,7 +138,34 @@ export class UpdateNote extends OpenAPIRoute {
       const { id } = c.req.param();
       const body = await c.req.json();
 
-      const { title, content, tags } = body;
+      const { title, content, tags, version } = body;
+
+      // If version is provided, check for conflicts first
+      if (version !== undefined) {
+        const { data: currentNote, error: fetchError } = await supabase
+          .from("notes")
+          .select("*")
+          .eq("id", id)
+          .eq("user_id", user.id)
+          .single();
+
+        if (fetchError) {
+          if (fetchError.code === "PGRST116") {
+            throw new HTTPException(404, { message: "Note not found" });
+          }
+          throw new HTTPException(500, {
+            message: "Failed to fetch current note",
+          });
+        }
+
+        // Check version conflict
+        if (currentNote.version !== version) {
+          throw new HTTPException(409, {
+            message: "Version conflict - note was modified by another client",
+            cause: { data: currentNote },
+          });
+        }
+      }
 
       // Build update object with only provided fields
       const updateNote: Database["public"]["Tables"]["notes"]["Update"] = {};
@@ -116,6 +173,11 @@ export class UpdateNote extends OpenAPIRoute {
       if (title !== undefined) updateNote.title = title;
       if (content !== undefined) updateNote.content = content;
       if (tags !== undefined) updateNote.tags = tags;
+
+      // Increment version on every update
+      if (version !== undefined) {
+        updateNote.version = version + 1;
+      }
 
       // Check if there's anything to update
       if (Object.keys(updateNote).length === 0) {
@@ -144,6 +206,17 @@ export class UpdateNote extends OpenAPIRoute {
     } catch (error) {
       console.error("Error in UpdateNote:", error);
       if (error instanceof HTTPException) {
+        // Handle 409 conflict specially to include current note data
+        if (error.status === 409 && error.cause) {
+          return c.json(
+            {
+              status: 409,
+              message: error.message,
+              data: (error.cause as any).data,
+            },
+            409,
+          );
+        }
         throw error;
       }
       throw new HTTPException(500, { message: "Internal server error" });

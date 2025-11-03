@@ -51,6 +51,9 @@ export class CreateNote extends OpenAPIRoute {
                       .string()
                       .nullable()
                       .describe("Comma-separated tags"),
+                    version: z
+                      .number()
+                      .describe("Version number for optimistic locking"),
                     created_at: z
                       .string()
                       .nullable()
@@ -105,6 +108,7 @@ export class CreateNote extends OpenAPIRoute {
         title,
         content,
         tags,
+        version: 1, // Initialize all new notes with version 1
       };
 
       const { data, error } = await supabase
