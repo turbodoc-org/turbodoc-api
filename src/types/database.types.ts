@@ -104,6 +104,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      diagrams: {
+        Row: {
+          connections: Json;
+          created_at: string;
+          id: string;
+          shapes: Json;
+          thumbnail: string | null;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          connections?: Json;
+          created_at?: string;
+          id?: string;
+          shapes?: Json;
+          thumbnail?: string | null;
+          title?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          connections?: Json;
+          created_at?: string;
+          id?: string;
+          shapes?: Json;
+          thumbnail?: string | null;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       notes: {
         Row: {
           content: string;

@@ -19,6 +19,12 @@ import { GetCodeSnippets } from "./endpoints/v1/code-snippets/getCodeSnippets";
 import { CreateCodeSnippet } from "./endpoints/v1/code-snippets/createCodeSnippet";
 import { UpdateCodeSnippet } from "./endpoints/v1/code-snippets/updateCodeSnippet";
 import { DeleteCodeSnippet } from "./endpoints/v1/code-snippets/deleteCodeSnippet";
+import { GetDiagrams } from "./endpoints/v1/diagrams/getDiagrams";
+import { GetDiagram } from "./endpoints/v1/diagrams/getDiagram";
+import { CreateDiagram } from "./endpoints/v1/diagrams/createDiagram";
+import { UpdateDiagram } from "./endpoints/v1/diagrams/updateDiagram";
+import { DeleteDiagram } from "./endpoints/v1/diagrams/deleteDiagram";
+import { DuplicateDiagram } from "./endpoints/v1/diagrams/duplicateDiagram";
 import { Env } from "./types/app-context";
 
 // Start a Hono app
@@ -115,6 +121,14 @@ openapi.get("/v1/code-snippets", GetCodeSnippets);
 openapi.post("/v1/code-snippets", CreateCodeSnippet);
 openapi.put("/v1/code-snippets/:id", UpdateCodeSnippet);
 openapi.delete("/v1/code-snippets/:id", DeleteCodeSnippet);
+
+// Register diagram endpoints
+openapi.get("/v1/diagrams", GetDiagrams);
+openapi.get("/v1/diagrams/:id", GetDiagram);
+openapi.post("/v1/diagrams", CreateDiagram);
+openapi.put("/v1/diagrams/:id", UpdateDiagram);
+openapi.delete("/v1/diagrams/:id", DeleteDiagram);
+openapi.post("/v1/diagrams/:id/duplicate", DuplicateDiagram);
 
 // Export the Hono app
 export default app;
