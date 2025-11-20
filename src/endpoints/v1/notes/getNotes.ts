@@ -24,6 +24,26 @@ export class GetNotes extends OpenAPIRoute {
           .string()
           .optional()
           .describe("Search term to filter notes by title or content"),
+        is_favorite: z
+          .string()
+          .optional()
+          .describe("Filter by favorite status (true/false)"),
+        tag: z.string().optional().describe("Filter by specific tag"),
+        days: z
+          .string()
+          .optional()
+          .describe("Filter by created in last N days"),
+        sort: z
+          .enum([
+            "date_newest",
+            "date_oldest",
+            "alpha_asc",
+            "alpha_desc",
+            "modified",
+          ])
+          .optional()
+          .default("date_newest")
+          .describe("Sort order"),
       }),
     },
     responses: {
@@ -46,6 +66,12 @@ export class GetNotes extends OpenAPIRoute {
                         .string()
                         .nullable()
                         .describe("Comma-separated tags"),
+                      is_favorite: z
+                        .boolean()
+                        .describe("Whether the note is marked as favorite"),
+                      version: z
+                        .number()
+                        .describe("Version number for optimistic locking"),
                       created_at: z
                         .string()
                         .nullable()
@@ -83,16 +109,59 @@ export class GetNotes extends OpenAPIRoute {
       const authToken = c.get("authToken");
       const supabase = supabaseApiClient(authToken, c);
 
-      const { limit = "50", offset = "0", search } = c.req.query();
+      const {
+        limit = "50",
+        offset = "0",
+        search,
+        is_favorite,
+        tag,
+        days,
+        sort = "date_newest",
+      } = c.req.query();
 
       let query = supabase
         .from("notes")
         .select("*", { count: "exact" })
-        .eq("user_id", user.id)
-        .order("updated_at", { ascending: false });
+        .eq("user_id", user.id);
 
+      // Apply filters
       if (search) {
         query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
+      }
+
+      if (is_favorite === "true") {
+        query = query.eq("is_favorite", true);
+      }
+
+      if (tag) {
+        query = query.ilike("tags", `%${tag}%`);
+      }
+
+      if (days) {
+        const daysAgo = new Date();
+        daysAgo.setDate(daysAgo.getDate() - parseInt(days, 10));
+        query = query.gte("created_at", daysAgo.toISOString());
+      }
+
+      // Apply sorting
+      switch (sort) {
+        case "date_newest":
+          query = query.order("created_at", { ascending: false });
+          break;
+        case "date_oldest":
+          query = query.order("created_at", { ascending: true });
+          break;
+        case "alpha_asc":
+          query = query.order("title", { ascending: true });
+          break;
+        case "alpha_desc":
+          query = query.order("title", { ascending: false });
+          break;
+        case "modified":
+          query = query.order("updated_at", { ascending: false });
+          break;
+        default:
+          query = query.order("created_at", { ascending: false });
       }
 
       query = query.range(

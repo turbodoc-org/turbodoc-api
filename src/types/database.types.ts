@@ -18,7 +18,9 @@ export type Database = {
         Row: {
           created_at: string | null;
           id: string;
+          is_favorite: boolean;
           status: string;
+          synced_at: string | null;
           tags: string | null;
           time_added: number;
           title: string;
@@ -29,7 +31,9 @@ export type Database = {
         Insert: {
           created_at?: string | null;
           id?: string;
+          is_favorite?: boolean;
           status?: string;
+          synced_at?: string | null;
           tags?: string | null;
           time_added: number;
           title: string;
@@ -40,7 +44,9 @@ export type Database = {
         Update: {
           created_at?: string | null;
           id?: string;
+          is_favorite?: boolean;
           status?: string;
+          synced_at?: string | null;
           tags?: string | null;
           time_added?: number;
           title?: string;
@@ -142,6 +148,8 @@ export type Database = {
           content: string;
           created_at: string | null;
           id: string;
+          is_favorite: boolean;
+          synced_at: string | null;
           tags: string | null;
           title: string;
           updated_at: string | null;
@@ -152,6 +160,8 @@ export type Database = {
           content?: string;
           created_at?: string | null;
           id?: string;
+          is_favorite?: boolean;
+          synced_at?: string | null;
           tags?: string | null;
           title?: string;
           updated_at?: string | null;
@@ -162,6 +172,8 @@ export type Database = {
           content?: string;
           created_at?: string | null;
           id?: string;
+          is_favorite?: boolean;
+          synced_at?: string | null;
           tags?: string | null;
           title?: string;
           updated_at?: string | null;

@@ -34,6 +34,10 @@ export class UpdateBookmark extends OpenAPIRoute {
                   .string()
                   .optional()
                   .describe("New status for the bookmark"),
+                is_favorite: z
+                  .boolean()
+                  .optional()
+                  .describe("Whether the bookmark is marked as favorite"),
               })
               .describe("Bookmark update request"),
           },
@@ -67,6 +71,9 @@ export class UpdateBookmark extends OpenAPIRoute {
                     status: z
                       .string()
                       .describe("Status of the bookmark (read/unread)"),
+                    is_favorite: z
+                      .boolean()
+                      .describe("Whether the bookmark is marked as favorite"),
                     created_at: z
                       .string()
                       .nullable()
@@ -126,7 +133,7 @@ export class UpdateBookmark extends OpenAPIRoute {
       const supabase = supabaseApiClient(authToken, c);
       const body = await c.req.json();
 
-      const { title, url, tags, status } = body;
+      const { title, url, tags, status, is_favorite } = body;
 
       const updatedBookmark: Database["public"]["Tables"]["bookmarks"]["Update"] =
         {};
@@ -134,6 +141,7 @@ export class UpdateBookmark extends OpenAPIRoute {
       if (url !== undefined) updatedBookmark.url = url;
       if (tags !== undefined) updatedBookmark.tags = tags;
       if (status !== undefined) updatedBookmark.status = status;
+      if (is_favorite !== undefined) updatedBookmark.is_favorite = is_favorite;
 
       const { data, error } = await supabase
         .from("bookmarks")

@@ -24,6 +24,10 @@ export class UpdateNote extends OpenAPIRoute {
                   .optional()
                   .describe("Content of the note (can include whitespace)"),
                 tags: z.string().optional().describe("Comma-separated tags"),
+                is_favorite: z
+                  .boolean()
+                  .optional()
+                  .describe("Whether the note is marked as favorite"),
                 version: z
                   .number()
                   .optional()
@@ -53,6 +57,9 @@ export class UpdateNote extends OpenAPIRoute {
                       .string()
                       .nullable()
                       .describe("Comma-separated tags"),
+                    is_favorite: z
+                      .boolean()
+                      .describe("Whether the note is marked as favorite"),
                     version: z
                       .number()
                       .describe("Version number for optimistic locking"),
@@ -96,6 +103,7 @@ export class UpdateNote extends OpenAPIRoute {
                   title: z.string(),
                   content: z.string(),
                   tags: z.string().nullable(),
+                  is_favorite: z.boolean(),
                   version: z.number(),
                   created_at: z.string().nullable(),
                   updated_at: z.string().nullable(),
@@ -138,7 +146,7 @@ export class UpdateNote extends OpenAPIRoute {
       const { id } = c.req.param();
       const body = await c.req.json();
 
-      const { title, content, tags, version } = body;
+      const { title, content, tags, is_favorite, version } = body;
 
       // If version is provided, check for conflicts first
       if (version !== undefined) {
@@ -173,6 +181,7 @@ export class UpdateNote extends OpenAPIRoute {
       if (title !== undefined) updateNote.title = title;
       if (content !== undefined) updateNote.content = content;
       if (tags !== undefined) updateNote.tags = tags;
+      if (is_favorite !== undefined) updateNote.is_favorite = is_favorite;
 
       // Increment version on every update
       if (version !== undefined) {
