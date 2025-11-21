@@ -146,10 +146,10 @@ export class GetNotes extends OpenAPIRoute {
       // Apply sorting
       switch (sort) {
         case "date_newest":
-          query = query.order("created_at", { ascending: false });
+          query = query.order("updated_at", { ascending: false });
           break;
         case "date_oldest":
-          query = query.order("created_at", { ascending: true });
+          query = query.order("updated_at", { ascending: true });
           break;
         case "alpha_asc":
           query = query.order("title", { ascending: true });
@@ -161,7 +161,7 @@ export class GetNotes extends OpenAPIRoute {
           query = query.order("updated_at", { ascending: false });
           break;
         default:
-          query = query.order("created_at", { ascending: false });
+          query = query.order("updated_at", { ascending: false });
       }
 
       query = query.range(
