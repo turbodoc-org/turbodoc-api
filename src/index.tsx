@@ -27,6 +27,7 @@ import { CreateDiagram } from "./endpoints/v1/diagrams/createDiagram";
 import { UpdateDiagram } from "./endpoints/v1/diagrams/updateDiagram";
 import { DeleteDiagram } from "./endpoints/v1/diagrams/deleteDiagram";
 import { DuplicateDiagram } from "./endpoints/v1/diagrams/duplicateDiagram";
+import { SendContactEmail } from "./endpoints/v1/contact/sendContactEmail";
 import { Env } from "./types/app-context";
 
 // Start a Hono app
@@ -96,6 +97,9 @@ app.onError((e, c) => {
     { status: 500 },
   );
 });
+
+// Public routes (no auth required)
+openapi.post("/v1/contact", SendContactEmail);
 
 // Apply auth middleware to all routes
 app.use("*", requireAuth);
