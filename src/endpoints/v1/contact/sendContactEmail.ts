@@ -3,7 +3,7 @@ import { OpenAPIRoute } from "chanfana";
 import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
 import { Resend } from "resend";
-import { ContactEmailTemplate } from "../../../emails/contact-email-template";
+import { renderContactEmailTemplate } from "../../../emails/contact-email-template";
 
 export class SendContactEmail extends OpenAPIRoute {
   static schema = {
@@ -74,13 +74,21 @@ export class SendContactEmail extends OpenAPIRoute {
       // Initialize Resend client
       const resend = new Resend(resendApiKey);
 
-      // Send email using Resend SDK with React template
+      // Render email template to HTML (Cloudflare Workers compatible)
+      const emailHtml = renderContactEmailTemplate({
+        name,
+        email,
+        subject,
+        message,
+      });
+
+      // Send email using Resend SDK with HTML
       const { data, error } = await resend.emails.send({
         from: "Turbodoc Contact <noreply@mail.turbodoc.ai>",
         to: [contactEmail],
         replyTo: email,
         subject: `[Turbodoc Contact Form] ${subject}`,
-        react: ContactEmailTemplate({ name, email, subject, message }),
+        html: emailHtml,
       });
 
       if (error) {

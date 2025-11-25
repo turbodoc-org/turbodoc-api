@@ -13,11 +13,9 @@
   },
   "dependencies": {
     "@hono/swagger-ui": "0.5.2",
-    "@react-email/components": "^1.0.1",
     "@supabase/supabase-js": "2.51.0",
     "chanfana": "2.8.1",
     "hono": "4.8.5",
-    "react-email": "^5.0.5",
     "resend": "^6.5.2",
     "zod": "4.0.5"
   },
@@ -25,7 +23,6 @@
     "@biomejs/biome": "2.1.1",
     "@hono/vite-build": "1.2.0",
     "@hono/vite-dev-server": "0.18.2",
-    "@types/react": "^19.2.7",
     "supabase": "2.31.4",
     "vite": "6.3.5",
     "wrangler": "4.24.4"
