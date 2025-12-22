@@ -45,6 +45,9 @@ app.use(
         "https://turbodoc.ai", // Production domain
         "https://www.turbodoc.ai", // WWW subdomain
         "http://localhost:3000", // Local development
+        "http://localhost:1420", // Tauri dev server
+        "tauri://localhost", // Tauri production (macOS/Linux)
+        "https://tauri.localhost", // Tauri production (Windows)
       ];
 
       return origin && allowedOrigins.includes(origin)
