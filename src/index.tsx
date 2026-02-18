@@ -1,34 +1,39 @@
+import { fromHono } from "chanfana";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { fromHono } from "chanfana";
-import { requireAuth } from "./utils/auth/middleware";
 import { HTTPException } from "hono/http-exception";
-import { GetBookmarks } from "./endpoints/v1/bookmarks/getBookmarks";
+import { BatchBookmarks } from "./endpoints/v1/bookmarks/batchBookmarks";
 import { CreateBookmark } from "./endpoints/v1/bookmarks/createBookmark";
-import { UpdateBookmark } from "./endpoints/v1/bookmarks/updateBookmark";
 import { DeleteBookmark } from "./endpoints/v1/bookmarks/deleteBookmark";
+import { GetBookmarks } from "./endpoints/v1/bookmarks/getBookmarks";
 import { GetOgImage } from "./endpoints/v1/bookmarks/getOgImage";
 import { SearchBookmarks } from "./endpoints/v1/bookmarks/searchBookmarks";
-import { BatchBookmarks } from "./endpoints/v1/bookmarks/batchBookmarks";
-import { GetNotes } from "./endpoints/v1/notes/getNotes";
-import { GetNote } from "./endpoints/v1/notes/getNote";
-import { CreateNote } from "./endpoints/v1/notes/createNote";
-import { UpdateNote } from "./endpoints/v1/notes/updateNote";
-import { DeleteNote } from "./endpoints/v1/notes/deleteNote";
-import { BatchNotes } from "./endpoints/v1/notes/batchNotes";
-import { GetTags } from "./endpoints/v1/tags/getTags";
-import { GetCodeSnippets } from "./endpoints/v1/code-snippets/getCodeSnippets";
+import { UpdateBookmark } from "./endpoints/v1/bookmarks/updateBookmark";
+import { CreateCapture } from "./endpoints/v1/capture/createCapture";
 import { CreateCodeSnippet } from "./endpoints/v1/code-snippets/createCodeSnippet";
-import { UpdateCodeSnippet } from "./endpoints/v1/code-snippets/updateCodeSnippet";
 import { DeleteCodeSnippet } from "./endpoints/v1/code-snippets/deleteCodeSnippet";
-import { GetDiagrams } from "./endpoints/v1/diagrams/getDiagrams";
-import { GetDiagram } from "./endpoints/v1/diagrams/getDiagram";
+import { GetCodeSnippets } from "./endpoints/v1/code-snippets/getCodeSnippets";
+import { UpdateCodeSnippet } from "./endpoints/v1/code-snippets/updateCodeSnippet";
+import { SendContactEmail } from "./endpoints/v1/contact/sendContactEmail";
 import { CreateDiagram } from "./endpoints/v1/diagrams/createDiagram";
-import { UpdateDiagram } from "./endpoints/v1/diagrams/updateDiagram";
 import { DeleteDiagram } from "./endpoints/v1/diagrams/deleteDiagram";
 import { DuplicateDiagram } from "./endpoints/v1/diagrams/duplicateDiagram";
-import { SendContactEmail } from "./endpoints/v1/contact/sendContactEmail";
-import { Env } from "./types/app-context";
+import { GetDiagram } from "./endpoints/v1/diagrams/getDiagram";
+import { GetDiagrams } from "./endpoints/v1/diagrams/getDiagrams";
+import { UpdateDiagram } from "./endpoints/v1/diagrams/updateDiagram";
+import { BatchNotes } from "./endpoints/v1/notes/batchNotes";
+import { CreateNote } from "./endpoints/v1/notes/createNote";
+import { DeleteNote } from "./endpoints/v1/notes/deleteNote";
+import { GetNote } from "./endpoints/v1/notes/getNote";
+import { GetNotes } from "./endpoints/v1/notes/getNotes";
+import { UpdateNote } from "./endpoints/v1/notes/updateNote";
+import { CreatePat } from "./endpoints/v1/pats/createPat";
+import { GetPats } from "./endpoints/v1/pats/getPats";
+import { RevokePat } from "./endpoints/v1/pats/revokePat";
+import { SearchAll } from "./endpoints/v1/search/searchAll";
+import { GetTags } from "./endpoints/v1/tags/getTags";
+import type { Env } from "./types/app-context";
+import { requireAuth } from "./utils/auth/middleware";
 
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>();
@@ -58,6 +63,7 @@ app.use(
     allowHeaders: [
       "Content-Type",
       "Authorization",
+      "Idempotency-Key",
       "token",
       "Baggage",
       "sentry-trace",
@@ -140,6 +146,15 @@ openapi.post("/v1/diagrams", CreateDiagram);
 openapi.put("/v1/diagrams/:id", UpdateDiagram);
 openapi.delete("/v1/diagrams/:id", DeleteDiagram);
 openapi.post("/v1/diagrams/:id/duplicate", DuplicateDiagram);
+
+// Register PAT endpoints
+openapi.post("/v1/pats", CreatePat);
+openapi.get("/v1/pats", GetPats);
+openapi.post("/v1/pats/:id/revoke", RevokePat);
+
+// Register unified endpoints
+openapi.get("/v1/search", SearchAll);
+openapi.post("/v1/capture", CreateCapture);
 
 // Export the Hono app
 export default app;

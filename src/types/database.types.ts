@@ -114,7 +114,9 @@ export type Database = {
         Row: {
           connections: Json;
           created_at: string;
+          format: string;
           id: string;
+          mermaid_text: string | null;
           shapes: Json;
           thumbnail: string | null;
           title: string;
@@ -124,7 +126,9 @@ export type Database = {
         Insert: {
           connections?: Json;
           created_at?: string;
+          format?: string;
           id?: string;
+          mermaid_text?: string | null;
           shapes?: Json;
           thumbnail?: string | null;
           title?: string;
@@ -134,11 +138,43 @@ export type Database = {
         Update: {
           connections?: Json;
           created_at?: string;
+          format?: string;
           id?: string;
+          mermaid_text?: string | null;
           shapes?: Json;
           thumbnail?: string | null;
           title?: string;
           updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      idempotency_keys: {
+        Row: {
+          created_at: string;
+          id: string;
+          key: string;
+          kind: string;
+          response: Json;
+          status: number;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          key: string;
+          kind: string;
+          response: Json;
+          status?: number;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          key?: string;
+          kind?: string;
+          response?: Json;
+          status?: number;
           user_id?: string;
         };
         Relationships: [];
@@ -179,6 +215,36 @@ export type Database = {
           updated_at?: string | null;
           user_id?: string;
           version?: number;
+        };
+        Relationships: [];
+      };
+      personal_access_tokens: {
+        Row: {
+          created_at: string;
+          id: string;
+          last_used_at: string | null;
+          revoked_at: string | null;
+          scopes: string[] | null;
+          token_hash: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          last_used_at?: string | null;
+          revoked_at?: string | null;
+          scopes?: string[] | null;
+          token_hash: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          last_used_at?: string | null;
+          revoked_at?: string | null;
+          scopes?: string[] | null;
+          token_hash?: string;
+          user_id?: string;
         };
         Relationships: [];
       };

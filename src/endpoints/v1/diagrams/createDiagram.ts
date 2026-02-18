@@ -1,8 +1,8 @@
-import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
-import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
-import { Database } from "../../../types/database.types";
+import { z } from "zod";
+import type { AppContext } from "../../../types/app-context";
+import type { Database } from "../../../types/database.types";
 import { supabaseApiClient } from "../../../utils/clients/supabase/api";
 
 export class CreateDiagram extends OpenAPIRoute {
@@ -29,6 +29,15 @@ export class CreateDiagram extends OpenAPIRoute {
                   .optional()
                   .default([])
                   .describe("Array of diagram connections"),
+                format: z
+                  .enum(["canvas_v1", "mermaid_v2"])
+                  .optional()
+                  .default("canvas_v1")
+                  .describe("Diagram format"),
+                mermaid_text: z
+                  .string()
+                  .optional()
+                  .describe("Raw Mermaid diagram text"),
                 thumbnail: z
                   .string()
                   .optional()
@@ -61,6 +70,13 @@ export class CreateDiagram extends OpenAPIRoute {
                     connections: z
                       .array(z.any())
                       .describe("Array of diagram connections"),
+                    format: z
+                      .string()
+                      .describe("Diagram format (canvas_v1 or mermaid_v2)"),
+                    mermaid_text: z
+                      .string()
+                      .nullable()
+                      .describe("Raw Mermaid diagram text"),
                     thumbnail: z
                       .string()
                       .nullable()
@@ -110,10 +126,23 @@ export class CreateDiagram extends OpenAPIRoute {
       const supabase = supabaseApiClient(authToken, c);
       const body = await c.req.json();
 
-      const { title, shapes = [], connections = [], thumbnail } = body;
+      const {
+        title,
+        shapes = [],
+        connections = [],
+        thumbnail,
+        format = "canvas_v1",
+        mermaid_text,
+      } = body;
 
       if (!title) {
         throw new HTTPException(400, { message: "Title is required" });
+      }
+
+      if (format === "mermaid_v2" && !mermaid_text) {
+        throw new HTTPException(400, {
+          message: "mermaid_text is required for mermaid_v2 diagrams",
+        });
       }
 
       const newDiagram: Database["public"]["Tables"]["diagrams"]["Insert"] = {
@@ -122,6 +151,8 @@ export class CreateDiagram extends OpenAPIRoute {
         shapes,
         connections,
         thumbnail,
+        format,
+        mermaid_text: mermaid_text ?? null,
       };
 
       const { data, error } = await supabase
