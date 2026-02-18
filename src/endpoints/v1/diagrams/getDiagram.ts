@@ -1,7 +1,7 @@
-import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
-import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
+import { z } from "zod";
+import type { AppContext } from "../../../types/app-context";
 import { supabaseApiClient } from "../../../utils/clients/supabase/api";
 
 export class GetDiagram extends OpenAPIRoute {
@@ -35,6 +35,13 @@ export class GetDiagram extends OpenAPIRoute {
                     connections: z
                       .array(z.any())
                       .describe("Array of diagram connections"),
+                    format: z
+                      .string()
+                      .describe("Diagram format (canvas_v1 or mermaid_v2)"),
+                    mermaid_text: z
+                      .string()
+                      .nullable()
+                      .describe("Raw Mermaid diagram text"),
                     thumbnail: z
                       .string()
                       .nullable()

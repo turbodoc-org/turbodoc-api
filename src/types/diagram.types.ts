@@ -25,6 +25,8 @@ export interface DiagramData {
   title: string;
   shapes: DiagramShape[];
   connections: DiagramConnection[];
+  format?: "canvas_v1" | "mermaid_v2";
+  mermaid_text?: string | null;
   thumbnail?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -35,6 +37,7 @@ export interface DiagramListItem {
   title: string;
   thumbnail?: string | null;
   updated_at: string;
+  format?: "canvas_v1" | "mermaid_v2";
 }
 
 export interface DiagramResponse {

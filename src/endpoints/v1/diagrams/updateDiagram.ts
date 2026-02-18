@@ -1,8 +1,8 @@
-import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
-import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
-import { Database } from "../../../types/database.types";
+import { z } from "zod";
+import type { AppContext } from "../../../types/app-context";
+import type { Database } from "../../../types/database.types";
 import { supabaseApiClient } from "../../../utils/clients/supabase/api";
 
 export class UpdateDiagram extends OpenAPIRoute {
@@ -31,6 +31,14 @@ export class UpdateDiagram extends OpenAPIRoute {
                   .array(z.any())
                   .optional()
                   .describe("Array of diagram connections"),
+                format: z
+                  .enum(["canvas_v1", "mermaid_v2"])
+                  .optional()
+                  .describe("Diagram format"),
+                mermaid_text: z
+                  .string()
+                  .optional()
+                  .describe("Raw Mermaid diagram text"),
                 thumbnail: z
                   .string()
                   .optional()
@@ -63,6 +71,13 @@ export class UpdateDiagram extends OpenAPIRoute {
                     connections: z
                       .array(z.any())
                       .describe("Array of diagram connections"),
+                    format: z
+                      .string()
+                      .describe("Diagram format (canvas_v1 or mermaid_v2)"),
+                    mermaid_text: z
+                      .string()
+                      .nullable()
+                      .describe("Raw Mermaid diagram text"),
                     thumbnail: z
                       .string()
                       .nullable()
@@ -124,7 +139,8 @@ export class UpdateDiagram extends OpenAPIRoute {
       const supabase = supabaseApiClient(authToken, c);
       const body = await c.req.json();
 
-      const { title, shapes, connections, thumbnail } = body;
+      const { title, shapes, connections, thumbnail, format, mermaid_text } =
+        body;
 
       const updatedDiagram: Database["public"]["Tables"]["diagrams"]["Update"] =
         {};
@@ -132,6 +148,16 @@ export class UpdateDiagram extends OpenAPIRoute {
       if (shapes !== undefined) updatedDiagram.shapes = shapes;
       if (connections !== undefined) updatedDiagram.connections = connections;
       if (thumbnail !== undefined) updatedDiagram.thumbnail = thumbnail;
+      if (format !== undefined) {
+        if (format === "mermaid_v2" && mermaid_text === undefined) {
+          throw new HTTPException(400, {
+            message: "mermaid_text is required when switching to mermaid_v2",
+          });
+        }
+        updatedDiagram.format = format;
+      }
+      if (mermaid_text !== undefined)
+        updatedDiagram.mermaid_text = mermaid_text;
 
       const { data, error } = await supabase
         .from("diagrams")

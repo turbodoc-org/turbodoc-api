@@ -89,10 +89,16 @@ src/
 
 ### Authentication
 
-All endpoints require Bearer token authentication via the `Authorization` header:
+All endpoints require Bearer token authentication via the `Authorization` header.
 
 ```txt
 Authorization: Bearer <your-jwt-token>
+```
+
+Personal access tokens (PATs) are also supported with the `td_pat_` prefix:
+
+```txt
+Authorization: Bearer td_pat_<token>
 ```
 
 ### Bookmarks
@@ -102,6 +108,37 @@ Authorization: Bearer <your-jwt-token>
 - `PUT /v1/bookmarks/:id` - Update an existing bookmark
 - `DELETE /v1/bookmarks/:id` - Delete a bookmark
 - `GET /v1/bookmarks/og-image` - Fetch Open Graph image for URL
+
+### Personal Access Tokens
+
+- `POST /v1/pats` - Create a PAT (returns token once)
+- `GET /v1/pats` - List PATs
+- `POST /v1/pats/:id/revoke` - Revoke a PAT
+
+### Unified Search
+
+- `GET /v1/search?q=...&types=...` - Search notes, bookmarks, diagrams, and code snippets
+
+Example:
+
+```bash
+curl "http://localhost:3000/v1/search?q=design&types=notes,bookmarks" \
+  -H "Authorization: Bearer <your-token>"
+```
+
+### Unified Capture
+
+- `POST /v1/capture` - Create a note, bookmark, snippet, or diagram
+
+Supports `Idempotency-Key` for safe retries:
+
+```bash
+curl -X POST http://localhost:3000/v1/capture \
+  -H "Authorization: Bearer <your-token>" \
+  -H "Idempotency-Key: 2b8f7d46-1b59-4a2b-8f1a-3f3e07d36c1b" \
+  -H "Content-Type: application/json" \
+  -d '{"kind":"note","title":"Quick capture","content":"Hello"}'
+```
 
 ## 🗄️ Database Schema
 
@@ -172,6 +209,12 @@ Configure these in your Cloudflare Pages dashboard:
 - JWT tokens validated on every request
 - Automatic token refresh supported
 - Row Level Security enforces data isolation
+
+### Personal Access Tokens
+
+- Create PATs via `POST /v1/pats`
+- Store the token securely; it is returned only once
+- Use the PAT as a Bearer token with the `td_pat_` prefix
 
 ### CORS Policy
 

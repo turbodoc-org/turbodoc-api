@@ -1,8 +1,8 @@
-import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
-import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
-import { Database } from "../../../types/database.types";
+import { z } from "zod";
+import type { AppContext } from "../../../types/app-context";
+import type { Database } from "../../../types/database.types";
 import { supabaseApiClient } from "../../../utils/clients/supabase/api";
 
 export class DuplicateDiagram extends OpenAPIRoute {
@@ -36,6 +36,13 @@ export class DuplicateDiagram extends OpenAPIRoute {
                     connections: z
                       .array(z.any())
                       .describe("Array of diagram connections"),
+                    format: z
+                      .string()
+                      .describe("Diagram format (canvas_v1 or mermaid_v2)"),
+                    mermaid_text: z
+                      .string()
+                      .nullable()
+                      .describe("Raw Mermaid diagram text"),
                     thumbnail: z
                       .string()
                       .nullable()
@@ -106,6 +113,8 @@ export class DuplicateDiagram extends OpenAPIRoute {
           shapes: originalDiagram.shapes,
           connections: originalDiagram.connections,
           thumbnail: originalDiagram.thumbnail,
+          format: originalDiagram.format,
+          mermaid_text: originalDiagram.mermaid_text,
         };
 
       const { data, error } = await supabase
