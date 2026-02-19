@@ -1,5 +1,5 @@
-import { type Context } from "hono";
-import { User } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
+import type { Context } from "hono";
 
 export type Env = {
   SUPABASE_URL: string;
@@ -14,5 +14,6 @@ export type AppContext = Context<{
   Variables: {
     user: User;
     authToken: string;
+    authType: "jwt" | "pat";
   };
 }>;

@@ -1,34 +1,38 @@
+import { fromHono } from "chanfana";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { fromHono } from "chanfana";
-import { requireAuth } from "./utils/auth/middleware";
 import { HTTPException } from "hono/http-exception";
-import { GetBookmarks } from "./endpoints/v1/bookmarks/getBookmarks";
+import { WhoAmI } from "./endpoints/v1/auth/whoami";
+import { BatchBookmarks } from "./endpoints/v1/bookmarks/batchBookmarks";
 import { CreateBookmark } from "./endpoints/v1/bookmarks/createBookmark";
-import { UpdateBookmark } from "./endpoints/v1/bookmarks/updateBookmark";
 import { DeleteBookmark } from "./endpoints/v1/bookmarks/deleteBookmark";
+import { GetBookmarks } from "./endpoints/v1/bookmarks/getBookmarks";
 import { GetOgImage } from "./endpoints/v1/bookmarks/getOgImage";
 import { SearchBookmarks } from "./endpoints/v1/bookmarks/searchBookmarks";
-import { BatchBookmarks } from "./endpoints/v1/bookmarks/batchBookmarks";
-import { GetNotes } from "./endpoints/v1/notes/getNotes";
-import { GetNote } from "./endpoints/v1/notes/getNote";
-import { CreateNote } from "./endpoints/v1/notes/createNote";
-import { UpdateNote } from "./endpoints/v1/notes/updateNote";
-import { DeleteNote } from "./endpoints/v1/notes/deleteNote";
-import { BatchNotes } from "./endpoints/v1/notes/batchNotes";
-import { GetTags } from "./endpoints/v1/tags/getTags";
-import { GetCodeSnippets } from "./endpoints/v1/code-snippets/getCodeSnippets";
+import { UpdateBookmark } from "./endpoints/v1/bookmarks/updateBookmark";
 import { CreateCodeSnippet } from "./endpoints/v1/code-snippets/createCodeSnippet";
-import { UpdateCodeSnippet } from "./endpoints/v1/code-snippets/updateCodeSnippet";
 import { DeleteCodeSnippet } from "./endpoints/v1/code-snippets/deleteCodeSnippet";
-import { GetDiagrams } from "./endpoints/v1/diagrams/getDiagrams";
-import { GetDiagram } from "./endpoints/v1/diagrams/getDiagram";
+import { GetCodeSnippets } from "./endpoints/v1/code-snippets/getCodeSnippets";
+import { UpdateCodeSnippet } from "./endpoints/v1/code-snippets/updateCodeSnippet";
+import { SendContactEmail } from "./endpoints/v1/contact/sendContactEmail";
 import { CreateDiagram } from "./endpoints/v1/diagrams/createDiagram";
-import { UpdateDiagram } from "./endpoints/v1/diagrams/updateDiagram";
 import { DeleteDiagram } from "./endpoints/v1/diagrams/deleteDiagram";
 import { DuplicateDiagram } from "./endpoints/v1/diagrams/duplicateDiagram";
-import { SendContactEmail } from "./endpoints/v1/contact/sendContactEmail";
-import { Env } from "./types/app-context";
+import { GetDiagram } from "./endpoints/v1/diagrams/getDiagram";
+import { GetDiagrams } from "./endpoints/v1/diagrams/getDiagrams";
+import { UpdateDiagram } from "./endpoints/v1/diagrams/updateDiagram";
+import { BatchNotes } from "./endpoints/v1/notes/batchNotes";
+import { CreateNote } from "./endpoints/v1/notes/createNote";
+import { DeleteNote } from "./endpoints/v1/notes/deleteNote";
+import { GetNote } from "./endpoints/v1/notes/getNote";
+import { GetNotes } from "./endpoints/v1/notes/getNotes";
+import { UpdateNote } from "./endpoints/v1/notes/updateNote";
+import { CreatePat } from "./endpoints/v1/pats/createPat";
+import { ListPats } from "./endpoints/v1/pats/listPats";
+import { RevokePat } from "./endpoints/v1/pats/revokePat";
+import { GetTags } from "./endpoints/v1/tags/getTags";
+import type { Env } from "./types/app-context";
+import { requireAuth } from "./utils/auth/middleware";
 
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>();
@@ -106,6 +110,14 @@ openapi.post("/v1/contact", SendContactEmail);
 
 // Apply auth middleware to all routes
 app.use("*", requireAuth);
+
+// Register auth endpoints
+openapi.get("/v1/auth/whoami", WhoAmI);
+
+// Register PAT endpoints
+openapi.post("/v1/pats", CreatePat);
+openapi.get("/v1/pats", ListPats);
+openapi.post("/v1/pats/:id/revoke", RevokePat);
 
 // Register bookmark endpoints
 openapi.get("/v1/bookmarks", GetBookmarks);
