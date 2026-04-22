@@ -4,8 +4,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite build && wrangler pages dev",
-    "deploy": "npm run build && wrangler pages deploy",
+    "preview": "vite build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
     "format": "npx @biomejs/biome format --write",
     "migrate": "npx supabase migration up --linked",
     "gen-db-types": "npx supabase gen types typescript --linked --schema public > src/types/database.types.ts",
