@@ -6,7 +6,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "turbodoc-api",
   "main": "./dist/index.js",
-  "compatibility_date": "2025-07-15",
+  "compatibility_date": "2026-04-23",
   "observability": {
     "enabled": true,
   },
