@@ -7,9 +7,18 @@
   "name": "turbodoc-api",
   "main": "./dist/index.js",
   "compatibility_date": "2025-07-15",
-  "routes": [{ "pattern": "api.turbodoc.ai", "custom_domain": true }],
   "observability": {
     "enabled": true,
+  },
+  "env": {
+    "dev": {
+      "name": "turbodoc-api-dev",
+      "routes": [{ "pattern": "api-dev.turbodoc.ai", "custom_domain": true }],
+    },
+    "prd": {
+      "name": "turbodoc-api",
+      "routes": [{ "pattern": "api.turbodoc.ai", "custom_domain": true }],
+    },
   },
   /**
    * Smart Placement
