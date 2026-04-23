@@ -1,0 +1,20 @@
+name = "turbodoc-api"
+main = "./dist/index.js"
+compatibility_date = "2026-04-23"
+
+[observability]
+enabled = true
+
+[env.dev]
+name = "turbodoc-api-dev"
+routes = [{ pattern = "api-dev.turbodoc.ai", custom_domain = true }]
+
+[[env.dev.send_email]]
+name = "EMAILER"
+
+[env.prd]
+name = "turbodoc-api"
+routes = [{ pattern = "api.turbodoc.ai", custom_domain = true }]
+
+[[env.prd.send_email]]
+name = "EMAILER"
