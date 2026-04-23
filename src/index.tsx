@@ -44,24 +44,12 @@ app.use(
       const allowedOrigins = [
         "https://turbodoc.ai", // Production domain
         "https://www.turbodoc.ai", // WWW subdomain
-        "http://localhost:3000", // Local development
-        "http://localhost:1420", // Tauri dev server
-        "tauri://localhost", // Tauri production (macOS/Linux)
-        "https://tauri.localhost", // Tauri production (Windows)
       ];
 
-      return origin && allowedOrigins.includes(origin)
-        ? origin
-        : allowedOrigins[0];
+      return origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
     },
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: [
-      "Content-Type",
-      "Authorization",
-      "token",
-      "Baggage",
-      "sentry-trace",
-    ],
+    allowHeaders: ["Content-Type", "Authorization", "token", "Baggage", "sentry-trace"],
     credentials: true,
   }),
 );
