@@ -71,13 +71,14 @@ export class SendContactEmail extends OpenAPIRoute {
       });
 
       const result = await env.EMAILER?.send({
-        from: "Turbodoc Contact <noreply@mail.turbodoc.ai>",
+        from: "Turbodoc Contact <noreply@send.turbodoc.ai>",
         to: [contactEmail],
         replyTo: email,
         subject: `[Turbodoc Contact Form] ${subject}`,
         html: emailHtml,
       });
 
+      console.log("Email sent successfully:", result);
       return c.json(
         {
           success: true,
