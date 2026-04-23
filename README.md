@@ -89,11 +89,15 @@ src/
 
 ### Authentication
 
-All endpoints require Bearer token authentication via the `Authorization` header:
+All endpoints require Bearer token authentication via the `Authorization` header.
+You can authenticate with either a Supabase JWT or a personal access token (PAT).
 
 ```txt
 Authorization: Bearer <your-jwt-token>
+Authorization: Bearer td_pat_<your-token>
 ```
+
+Use `GET /v1/auth/whoami` to verify the current identity and auth type.
 
 ### Bookmarks
 
@@ -102,6 +106,16 @@ Authorization: Bearer <your-jwt-token>
 - `PUT /v1/bookmarks/:id` - Update an existing bookmark
 - `DELETE /v1/bookmarks/:id` - Delete a bookmark
 - `GET /v1/bookmarks/og-image` - Fetch Open Graph image for URL
+
+### Personal Access Tokens (PATs)
+
+- `GET /v1/pats` - List personal access tokens
+- `POST /v1/pats` - Create a new personal access token
+- `POST /v1/pats/:id/revoke` - Revoke a personal access token
+
+### Auth Utilities
+
+- `GET /v1/auth/whoami` - Return `{ user_id, auth_type }` for the current request
 
 ## 🗄️ Database Schema
 
