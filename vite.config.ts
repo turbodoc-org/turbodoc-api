@@ -4,6 +4,11 @@ import adapter from "@hono/vite-dev-server/cloudflare";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
+  build: {
+    rolldownOptions: {
+      external: ["cloudflare:workers"],
+    },
+  },
   staged: {
     "*": "vp check --fix",
   },
