@@ -9,21 +9,18 @@ declare namespace Cloudflare {
     SUPABASE_URL: string;
     SUPABASE_PUBLISHABLE_KEY: string;
     SUPABASE_SECRET_KEY: string;
-    RESEND_API_KEY: string;
     CONTACT_EMAIL: string;
   }
   interface PrdEnv {
     SUPABASE_URL: string;
     SUPABASE_PUBLISHABLE_KEY: string;
     SUPABASE_SECRET_KEY: string;
-    RESEND_API_KEY: string;
     CONTACT_EMAIL: string;
   }
   interface Env {
     SUPABASE_URL: string;
     SUPABASE_PUBLISHABLE_KEY: string;
     SUPABASE_SECRET_KEY: string;
-    RESEND_API_KEY: string;
     CONTACT_EMAIL: string;
     EMAILER?: SendEmail;
   }

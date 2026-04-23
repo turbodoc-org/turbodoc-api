@@ -78,7 +78,7 @@ export class SendContactEmail extends OpenAPIRoute {
         html: emailHtml,
       });
 
-      console.log("Email sent successfully:", result);
+      console.log("Email sent successfully: ", result?.messageId);
       return c.json(
         {
           success: true,
