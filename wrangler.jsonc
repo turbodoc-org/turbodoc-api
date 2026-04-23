@@ -20,6 +20,11 @@
       "routes": [{ "pattern": "api.turbodoc.ai", "custom_domain": true }],
     },
   },
+  "send_email": [
+    {
+      "name": "EMAILER",
+    },
+  ],
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

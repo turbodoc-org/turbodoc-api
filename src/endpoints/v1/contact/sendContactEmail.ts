@@ -2,8 +2,8 @@ import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
 import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
-import { Resend } from "resend";
 import { renderContactEmailTemplate } from "../../../emails/contact-email-template";
+import { env } from "cloudflare:workers";
 
 export class SendContactEmail extends OpenAPIRoute {
   static schema = {
@@ -15,17 +15,9 @@ export class SendContactEmail extends OpenAPIRoute {
           "application/json": {
             schema: z
               .object({
-                name: z
-                  .string()
-                  .min(1, "Name is required")
-                  .describe("Sender's name"),
-                email: z
-                  .email("Must be a valid email")
-                  .describe("Sender's email address"),
-                subject: z
-                  .string()
-                  .min(1, "Subject is required")
-                  .describe("Email subject"),
+                name: z.string().min(1, "Name is required").describe("Sender's name"),
+                email: z.email("Must be a valid email").describe("Sender's email address"),
+                subject: z.string().min(1, "Subject is required").describe("Email subject"),
                 message: z
                   .string()
                   .min(10, "Message must be at least 10 characters")
@@ -68,11 +60,7 @@ export class SendContactEmail extends OpenAPIRoute {
         });
       }
 
-      const resendApiKey = c.env.RESEND_API_KEY;
       const contactEmail = c.env.CONTACT_EMAIL!;
-
-      // Initialize Resend client
-      const resend = new Resend(resendApiKey);
 
       // Render email template to HTML (Cloudflare Workers compatible)
       const emailHtml = renderContactEmailTemplate({
@@ -82,21 +70,13 @@ export class SendContactEmail extends OpenAPIRoute {
         message,
       });
 
-      // Send email using Resend SDK with HTML
-      const { data, error } = await resend.emails.send({
+      const result = await env.EMAILER?.send({
         from: "Turbodoc Contact <noreply@mail.turbodoc.ai>",
         to: [contactEmail],
         replyTo: email,
         subject: `[Turbodoc Contact Form] ${subject}`,
         html: emailHtml,
       });
-
-      if (error) {
-        console.error("Resend API error:", error);
-        throw new HTTPException(500, {
-          message: "Failed to send email",
-        });
-      }
 
       return c.json(
         {
