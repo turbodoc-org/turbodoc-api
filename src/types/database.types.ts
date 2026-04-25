@@ -1,10 +1,4 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -16,10 +10,13 @@ export type Database = {
     Tables: {
       bookmarks: {
         Row: {
+          content_processed_at: string | null;
+          content_status: string;
           created_at: string | null;
           id: string;
-          is_favorite: boolean;
+          is_favorite: boolean | null;
           status: string;
+          summary: string | null;
           synced_at: string | null;
           tags: string | null;
           time_added: number;
@@ -27,12 +24,16 @@ export type Database = {
           updated_at: string | null;
           url: string;
           user_id: string;
+          workflow_instance_id: string | null;
         };
         Insert: {
+          content_processed_at?: string | null;
+          content_status?: string;
           created_at?: string | null;
           id?: string;
-          is_favorite?: boolean;
+          is_favorite?: boolean | null;
           status?: string;
+          summary?: string | null;
           synced_at?: string | null;
           tags?: string | null;
           time_added: number;
@@ -40,12 +41,16 @@ export type Database = {
           updated_at?: string | null;
           url: string;
           user_id: string;
+          workflow_instance_id?: string | null;
         };
         Update: {
+          content_processed_at?: string | null;
+          content_status?: string;
           created_at?: string | null;
           id?: string;
-          is_favorite?: boolean;
+          is_favorite?: boolean | null;
           status?: string;
+          summary?: string | null;
           synced_at?: string | null;
           tags?: string | null;
           time_added?: number;
@@ -53,6 +58,7 @@ export type Database = {
           updated_at?: string | null;
           url?: string;
           user_id?: string;
+          workflow_instance_id?: string | null;
         };
         Relationships: [];
       };
@@ -143,12 +149,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      digest_preferences: {
+        Row: {
+          created_at: string;
+          day_of_week: number;
+          enabled: boolean;
+          last_sent_at: string | null;
+          send_time: string;
+          timezone: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          day_of_week?: number;
+          enabled?: boolean;
+          last_sent_at?: string | null;
+          send_time?: string;
+          timezone?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          day_of_week?: number;
+          enabled?: boolean;
+          last_sent_at?: string | null;
+          send_time?: string;
+          timezone?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       notes: {
         Row: {
           content: string;
           created_at: string | null;
           id: string;
-          is_favorite: boolean;
+          is_favorite: boolean | null;
           synced_at: string | null;
           tags: string | null;
           title: string;
@@ -160,7 +199,7 @@ export type Database = {
           content?: string;
           created_at?: string | null;
           id?: string;
-          is_favorite?: boolean;
+          is_favorite?: boolean | null;
           synced_at?: string | null;
           tags?: string | null;
           title?: string;
@@ -172,7 +211,7 @@ export type Database = {
           content?: string;
           created_at?: string | null;
           id?: string;
-          is_favorite?: boolean;
+          is_favorite?: boolean | null;
           synced_at?: string | null;
           tags?: string | null;
           title?: string;
@@ -200,10 +239,7 @@ export type Database = {
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<
-  keyof Database,
-  "public"
->];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
@@ -224,10 +260,8 @@ export type Tables<
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R;
       }
       ? R
