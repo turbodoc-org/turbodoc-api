@@ -28,10 +28,11 @@ import { UpdateDiagram } from "./endpoints/v1/diagrams/updateDiagram";
 import { DeleteDiagram } from "./endpoints/v1/diagrams/deleteDiagram";
 import { DuplicateDiagram } from "./endpoints/v1/diagrams/duplicateDiagram";
 import { SendContactEmail } from "./endpoints/v1/contact/sendContactEmail";
-import { Env } from "./types/app-context";
+import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences";
+import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
 
 // Start a Hono app
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ Bindings: Cloudflare.Env }>();
 
 // Setup CORS middleware
 app.use(
@@ -131,3 +132,6 @@ openapi.post("/v1/diagrams/:id/duplicate", DuplicateDiagram);
 
 // Export the Hono app
 export default app;
+// Register digest endpoints
+openapi.get("/v1/digest/preferences", GetDigestPreferences);
+openapi.put("/v1/digest/preferences", UpdateDigestPreferences);
