@@ -30,6 +30,7 @@ import { DuplicateDiagram } from "./endpoints/v1/diagrams/duplicateDiagram";
 import { SendContactEmail } from "./endpoints/v1/contact/sendContactEmail";
 import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences";
 import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
+import { sendDueDigests } from "./scheduled/send-digests";
 
 // Start a Hono app
 const app = new Hono<{ Bindings: Cloudflare.Env }>();
@@ -130,8 +131,14 @@ openapi.put("/v1/diagrams/:id", UpdateDiagram);
 openapi.delete("/v1/diagrams/:id", DeleteDiagram);
 openapi.post("/v1/diagrams/:id/duplicate", DuplicateDiagram);
 
-// Export the Hono app
-export default app;
 // Register digest endpoints
 openapi.get("/v1/digest/preferences", GetDigestPreferences);
 openapi.put("/v1/digest/preferences", UpdateDigestPreferences);
+// Export the Worker with fetch + scheduled handlers. Workflow class is exported
+// above as a named export so Wrangler can find it via class_name.
+export default {
+  fetch: app.fetch,
+  async scheduled(controller: ScheduledController, env: Cloudflare.Env, ctx: ExecutionContext) {
+    ctx.waitUntil(sendDueDigests(env));
+  },
+} satisfies ExportedHandler<Cloudflare.Env>;
