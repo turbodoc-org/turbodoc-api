@@ -31,6 +31,9 @@ import { SendContactEmail } from "./endpoints/v1/contact/sendContactEmail";
 import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences";
 import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
 import { sendDueDigests } from "./scheduled/send-digests";
+import { BookmarkWorkflow } from "./workflows/bookmark-workflow";
+
+export { BookmarkWorkflow };
 
 // Start a Hono app
 const app = new Hono<{ Bindings: Cloudflare.Env }>();
