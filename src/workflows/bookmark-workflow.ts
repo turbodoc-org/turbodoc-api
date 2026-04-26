@@ -75,7 +75,7 @@ export class BookmarkWorkflow extends WorkflowEntrypoint<Cloudflare.Env, Bookmar
         { retries: { limit: 2, delay: "5 seconds", backoff: "exponential" } },
         async () => {
           const truncated = markdown.slice(0, MAX_CONTENT_CHARS);
-          const response = (await this.env.AI!.run("@cf/meta/llama-3.3-70b-instruct", {
+          const response = (await this.env.AI!.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
             messages: [
               { role: "system", content: SUMMARY_SYSTEM_PROMPT },
               { role: "user", content: truncated },

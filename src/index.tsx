@@ -96,7 +96,6 @@ app.onError((e, c) => {
 
 // Public routes (no auth required)
 openapi.post("/v1/contact", SendContactEmail);
-
 // Apply auth middleware to all routes
 app.use("*", requireAuth);
 
