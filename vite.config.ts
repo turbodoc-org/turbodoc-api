@@ -7,7 +7,6 @@ export default defineConfig({
   build: {
     rolldownOptions: {
       external: ["cloudflare:workers"],
-      preserveEntrySignatures: "exports-only",
     },
   },
   staged: {
@@ -17,6 +16,28 @@ export default defineConfig({
   plugins: [
     build({
       entry: "src/index.tsx",
+      entryContentBeforeHooks: [() => `import { BookmarkWorkflow } from '/src/index.tsx'`],
+      entryContentAfterHooks: [
+        () => `
+					const merged = {}
+					const definedHandlers = new Set()
+					for (const [file, app] of Object.entries(modules)) {
+						for (const [key, handler] of Object.entries(app)) {
+							if (key !== 'fetch') {
+								if (definedHandlers.has(key)) {
+									throw new Error(\`Handler "\${key}" is defined in multiple entry files. Please ensure each handler (except fetch) is defined only once.\`)
+								}
+								definedHandlers.add(key)
+								merged[key] = handler
+							}
+						}
+					}
+				`,
+      ],
+      entryContentDefaultExportHook: (appName) => `
+				export default { ...merged, fetch: ${appName}.fetch }
+				export { BookmarkWorkflow }
+			`,
     }),
     devServer({
       adapter,
