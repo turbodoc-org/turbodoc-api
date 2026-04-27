@@ -85,6 +85,7 @@ async function sendDigestForUser(
     .from("bookmarks")
     .select("title, url, summary")
     .eq("user_id", pref.user_id)
+    .eq("content_status", "succeeded")
     .gte("time_added", Math.floor(weekStart.getTime() / 1000))
     .order("time_added", { ascending: false });
 
