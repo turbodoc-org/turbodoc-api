@@ -4,30 +4,17 @@ import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
 import { Database } from "../../../types/database.types";
 import { supabaseApiClient } from "../../../utils/clients/supabase/api";
+import { enqueueBookmarkWorkflow } from "../../../utils/workflows/enqueue-bookmark";
 
 const BookmarkOperationSchema = z.object({
-  operation: z
-    .enum(["create", "update", "delete"])
-    .describe("Type of operation to perform"),
-  id: z
-    .string()
-    .optional()
-    .describe("UUID of the bookmark (required for update/delete)"),
+  operation: z.enum(["create", "update", "delete"]).describe("Type of operation to perform"),
+  id: z.string().optional().describe("UUID of the bookmark (required for update/delete)"),
   title: z.string().optional().describe("Title of the bookmark"),
   url: z.string().optional().describe("URL of the bookmark"),
   tags: z.string().optional().describe("Pipe-separated tags"),
-  status: z
-    .enum(["unread", "read", "archived"])
-    .optional()
-    .describe("Status of the bookmark"),
-  is_favorite: z
-    .boolean()
-    .optional()
-    .describe("Whether the bookmark is favorite"),
-  version: z
-    .number()
-    .optional()
-    .describe("Current version number for optimistic locking"),
+  status: z.enum(["unread", "read", "archived"]).optional().describe("Status of the bookmark"),
+  is_favorite: z.boolean().optional().describe("Whether the bookmark is favorite"),
+  version: z.number().optional().describe("Current version number for optimistic locking"),
 });
 
 const BatchResultSchema = z.object({
@@ -83,14 +70,10 @@ export class BatchBookmarks extends OpenAPIRoute {
           "application/json": {
             schema: z
               .object({
-                results: z
-                  .array(BatchResultSchema)
-                  .describe("Results for each operation"),
+                results: z.array(BatchResultSchema).describe("Results for each operation"),
                 summary: z.object({
                   total: z.number().describe("Total operations requested"),
-                  successful: z
-                    .number()
-                    .describe("Number of successful operations"),
+                  successful: z.number().describe("Number of successful operations"),
                   failed: z.number().describe("Number of failed operations"),
                 }),
               })
@@ -147,16 +130,15 @@ export class BatchBookmarks extends OpenAPIRoute {
                 continue;
               }
 
-              const insertData: Database["public"]["Tables"]["bookmarks"]["Insert"] =
-                {
-                  user_id: user.id,
-                  title: op.title || op.url,
-                  url: op.url,
-                  tags: op.tags || null,
-                  status: op.status || "unread",
-                  is_favorite: op.is_favorite || false,
-                  time_added: Math.floor(Date.now() / 1000),
-                };
+              const insertData: Database["public"]["Tables"]["bookmarks"]["Insert"] = {
+                user_id: user.id,
+                title: op.title || op.url,
+                url: op.url,
+                tags: op.tags || null,
+                status: op.status || "unread",
+                is_favorite: op.is_favorite || false,
+                time_added: Math.floor(Date.now() / 1000),
+              };
 
               const { data, error } = await supabase
                 .from("bookmarks")
@@ -165,6 +147,18 @@ export class BatchBookmarks extends OpenAPIRoute {
                 .single();
 
               if (error) throw error;
+
+              const instanceId = await enqueueBookmarkWorkflow(c, {
+                bookmarkId: data.id,
+                userId: user.id,
+                url: data.url,
+              });
+              if (instanceId) {
+                await supabase
+                  .from("bookmarks")
+                  .update({ workflow_instance_id: instanceId })
+                  .eq("id", data.id);
+              }
 
               results.push({
                 success: true,
@@ -185,15 +179,20 @@ export class BatchBookmarks extends OpenAPIRoute {
                 continue;
               }
 
-              const updateData: Database["public"]["Tables"]["bookmarks"]["Update"] =
-                {};
+              const updateData: Database["public"]["Tables"]["bookmarks"]["Update"] = {};
 
               if (op.title !== undefined) updateData.title = op.title;
-              if (op.url !== undefined) updateData.url = op.url;
+              if (op.url !== undefined) {
+                updateData.url = op.url;
+                // URL changed → re-crawl and re-summarise. The scheduled handler
+                // skips bookmarks whose content_status is not 'succeeded'.
+                updateData.summary = null;
+                updateData.content_status = "pending";
+                updateData.content_processed_at = null;
+              }
               if (op.tags !== undefined) updateData.tags = op.tags;
               if (op.status !== undefined) updateData.status = op.status;
-              if (op.is_favorite !== undefined)
-                updateData.is_favorite = op.is_favorite;
+              if (op.is_favorite !== undefined) updateData.is_favorite = op.is_favorite;
 
               // Build query with version check if provided
               let query = supabase
@@ -202,11 +201,21 @@ export class BatchBookmarks extends OpenAPIRoute {
                 .eq("id", op.id)
                 .eq("user_id", user.id);
 
-              if (op.version !== undefined) {
-                query = query.eq("version", op.version);
-              }
-
               const { data, error } = await query.select().single();
+
+              if (!error && data && op.url !== undefined) {
+                const instanceId = await enqueueBookmarkWorkflow(c, {
+                  bookmarkId: data.id,
+                  userId: user.id,
+                  url: data.url,
+                });
+                if (instanceId) {
+                  await supabase
+                    .from("bookmarks")
+                    .update({ workflow_instance_id: instanceId })
+                    .eq("id", data.id);
+                }
+              }
 
               if (error) {
                 if (error.code === "PGRST116") {
@@ -215,8 +224,7 @@ export class BatchBookmarks extends OpenAPIRoute {
                     success: false,
                     operation: "update",
                     id: op.id,
-                    error:
-                      "Version conflict - bookmark was modified by another client",
+                    error: "Version conflict - bookmark was modified by another client",
                   });
                   continue;
                 }
@@ -263,8 +271,7 @@ export class BatchBookmarks extends OpenAPIRoute {
             success: false,
             operation: op.operation,
             id: op.id,
-            error:
-              error instanceof Error ? error.message : "Unknown error occurred",
+            error: error instanceof Error ? error.message : "Unknown error occurred",
           });
         }
       }

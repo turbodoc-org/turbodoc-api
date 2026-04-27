@@ -12,6 +12,7 @@
     "prepare": "vp config"
   },
   "dependencies": {
+    "@cloudflare/puppeteer": "1.1.0",
     "@hono/swagger-ui": "0.6.1",
     "@supabase/supabase-js": "2.104.0",
     "chanfana": "2.8.1",
@@ -21,16 +22,20 @@
   "devDependencies": {
     "@hono/vite-build": "1.11.1",
     "@hono/vite-dev-server": "0.25.3",
+    "@types/node": "25.6.0",
     "supabase": "2.93.1",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
     "vite-plus": "latest",
-    "wrangler": "4.84.1"
+    "wrangler": "4.85.0"
   },
-  "packageManager": "pnpm@10.33.1",
+  "packageManager": "pnpm@10.33.2",
   "pnpm": {
     "overrides": {
       "vite": "npm:@voidzero-dev/vite-plus-core@latest",
       "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "supabase"
+    ]
   }
 }

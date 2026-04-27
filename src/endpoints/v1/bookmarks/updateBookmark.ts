@@ -4,6 +4,7 @@ import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
 import { Database } from "../../../types/database.types";
 import { supabaseApiClient } from "../../../utils/clients/supabase/api";
+import { enqueueBookmarkWorkflow } from "../../../utils/workflows/enqueue-bookmark";
 
 export class UpdateBookmark extends OpenAPIRoute {
   static schema = {
@@ -21,19 +22,10 @@ export class UpdateBookmark extends OpenAPIRoute {
           "application/json": {
             schema: z
               .object({
-                title: z
-                  .string()
-                  .optional()
-                  .describe("New title for the bookmark"),
+                title: z.string().optional().describe("New title for the bookmark"),
                 url: z.string().optional().describe("New URL for the bookmark"),
-                tags: z
-                  .string()
-                  .optional()
-                  .describe("New comma-separated tags"),
-                status: z
-                  .string()
-                  .optional()
-                  .describe("New status for the bookmark"),
+                tags: z.string().optional().describe("New comma-separated tags"),
+                status: z.string().optional().describe("New status for the bookmark"),
                 is_favorite: z
                   .boolean()
                   .optional()
@@ -53,27 +45,14 @@ export class UpdateBookmark extends OpenAPIRoute {
               .object({
                 data: z
                   .object({
-                    id: z
-                      .string()
-                      .describe("Unique identifier for the bookmark"),
-                    user_id: z
-                      .string()
-                      .describe("ID of the user who owns this bookmark"),
+                    id: z.string().describe("Unique identifier for the bookmark"),
+                    user_id: z.string().describe("ID of the user who owns this bookmark"),
                     title: z.string().describe("Title of the bookmark"),
                     url: z.string().describe("URL of the bookmark"),
-                    time_added: z
-                      .number()
-                      .describe("Unix timestamp when bookmark was added"),
-                    tags: z
-                      .string()
-                      .nullable()
-                      .describe("Comma-separated tags"),
-                    status: z
-                      .string()
-                      .describe("Status of the bookmark (read/unread)"),
-                    is_favorite: z
-                      .boolean()
-                      .describe("Whether the bookmark is marked as favorite"),
+                    time_added: z.number().describe("Unix timestamp when bookmark was added"),
+                    tags: z.string().nullable().describe("Comma-separated tags"),
+                    status: z.string().describe("Status of the bookmark (read/unread)"),
+                    is_favorite: z.boolean().describe("Whether the bookmark is marked as favorite"),
                     created_at: z
                       .string()
                       .nullable()
@@ -135,10 +114,15 @@ export class UpdateBookmark extends OpenAPIRoute {
 
       const { title, url, tags, status, is_favorite } = body;
 
-      const updatedBookmark: Database["public"]["Tables"]["bookmarks"]["Update"] =
-        {};
+      const updatedBookmark: Database["public"]["Tables"]["bookmarks"]["Update"] = {};
       if (title !== undefined) updatedBookmark.title = title;
-      if (url !== undefined) updatedBookmark.url = url;
+      if (url !== undefined) {
+        updatedBookmark.url = url;
+        // URL change invalidates the cached summary; re-run the workflow below.
+        updatedBookmark.summary = null;
+        updatedBookmark.content_status = "pending";
+        updatedBookmark.content_processed_at = null;
+      }
       if (tags !== undefined) updatedBookmark.tags = tags;
       if (status !== undefined) updatedBookmark.status = status;
       if (is_favorite !== undefined) updatedBookmark.is_favorite = is_favorite;
@@ -146,7 +130,7 @@ export class UpdateBookmark extends OpenAPIRoute {
       const { data, error } = await supabase
         .from("bookmarks")
         .update(updatedBookmark)
-        .eq("id", id)
+        .eq("id", id!)
         .eq("user_id", user.id)
         .select()
         .single();
@@ -158,6 +142,20 @@ export class UpdateBookmark extends OpenAPIRoute {
 
       if (!data) {
         throw new HTTPException(404, { message: "Bookmark not found" });
+      }
+
+      if (url !== undefined) {
+        const instanceId = await enqueueBookmarkWorkflow(c, {
+          bookmarkId: data.id,
+          userId: user.id,
+          url: data.url,
+        });
+        if (instanceId) {
+          await supabase
+            .from("bookmarks")
+            .update({ workflow_instance_id: instanceId })
+            .eq("id", data.id);
+        }
       }
 
       return c.json({ data });

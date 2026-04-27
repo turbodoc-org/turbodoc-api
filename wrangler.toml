@@ -1,6 +1,7 @@
 name = "turbodoc-api"
 main = "./dist/index.js"
 compatibility_date = "2026-04-23"
+compatibility_flags = ["nodejs_compat"]
 
 [observability]
 enabled = true
@@ -12,9 +13,37 @@ routes = [{ pattern = "api-dev.turbodoc.ai", custom_domain = true }]
 [[env.dev.send_email]]
 name = "EMAILER"
 
+[env.dev.ai]
+binding = "AI"
+
+[env.dev.browser]
+binding = "BROWSER"
+
+[[env.dev.workflows]]
+name = "bookmark-workflow-dev"
+binding = "BOOKMARK_WORKFLOW"
+class_name = "BookmarkWorkflow"
+
+[env.dev.triggers]
+crons = ["*/15 * * * *"]
+
 [env.prd]
 name = "turbodoc-api"
 routes = [{ pattern = "api.turbodoc.ai", custom_domain = true }]
 
 [[env.prd.send_email]]
 name = "EMAILER"
+
+[env.prd.ai]
+binding = "AI"
+
+[env.prd.browser]
+binding = "BROWSER"
+
+[[env.prd.workflows]]
+name = "bookmark-workflow"
+binding = "BOOKMARK_WORKFLOW"
+class_name = "BookmarkWorkflow"
+
+[env.prd.triggers]
+crons = ["*/15 * * * *"]
