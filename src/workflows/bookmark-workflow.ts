@@ -51,8 +51,10 @@ export class BookmarkWorkflow extends WorkflowEntrypoint<Cloudflare.Env, Bookmar
           );
 
           if (!res.ok) {
-            console.error(`Markdown API ${res.status}: ${await res.text()}`);
-            throw new Error(`Markdown API ${res.status}: ${await res.text()}`);
+            const errorBody = await res.text();
+            const message = `Markdown API ${res.status}: ${errorBody}`;
+            console.error(message);
+            throw new Error(message);
           }
 
           const data = (await res.json()) as { success?: boolean; result?: string };
