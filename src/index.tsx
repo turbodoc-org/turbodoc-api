@@ -32,6 +32,7 @@ import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences
 import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
 import { sendDueDigests } from "./scheduled/send-digests";
 import { BookmarkWorkflow } from "./workflows/bookmark-workflow";
+import { handleMcpRequest } from "./mcp/server";
 
 export { BookmarkWorkflow };
 
@@ -54,7 +55,16 @@ app.use(
       return origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
     },
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "token", "Baggage", "sentry-trace"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "token",
+      "Baggage",
+      "sentry-trace",
+      "Accept",
+      "MCP-Protocol-Version",
+      "Mcp-Session-Id",
+    ],
     credentials: true,
   }),
 );
@@ -98,6 +108,10 @@ app.onError((e, c) => {
 openapi.post("/v1/contact", SendContactEmail);
 // Apply auth middleware to all routes
 app.use("*", requireAuth);
+
+// Register MCP endpoint
+app.post("/mcp", handleMcpRequest);
+app.get("/mcp", (c) => c.text("SSE stream is not supported by this MCP endpoint", 405));
 
 // Register bookmark endpoints
 openapi.get("/v1/bookmarks", GetBookmarks);

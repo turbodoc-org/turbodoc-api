@@ -120,7 +120,9 @@ export type Database = {
         Row: {
           connections: Json;
           created_at: string;
+          diagram_type: string;
           id: string;
+          mermaid_source: string | null;
           shapes: Json;
           thumbnail: string | null;
           title: string;
@@ -130,7 +132,9 @@ export type Database = {
         Insert: {
           connections?: Json;
           created_at?: string;
+          diagram_type?: string;
           id?: string;
+          mermaid_source?: string | null;
           shapes?: Json;
           thumbnail?: string | null;
           title?: string;
@@ -140,7 +144,9 @@ export type Database = {
         Update: {
           connections?: Json;
           created_at?: string;
+          diagram_type?: string;
           id?: string;
+          mermaid_source?: string | null;
           shapes?: Json;
           thumbnail?: string | null;
           title?: string;
