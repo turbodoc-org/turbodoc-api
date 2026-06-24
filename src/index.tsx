@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { fromHono } from "chanfana";
-import { requireAuth } from "./utils/auth/middleware";
+import { requireAuth, requireMcpAuth } from "./utils/auth/middleware";
 import { HTTPException } from "hono/http-exception";
 import { GetBookmarks } from "./endpoints/v1/bookmarks/getBookmarks";
 import { CreateBookmark } from "./endpoints/v1/bookmarks/createBookmark";
@@ -33,6 +33,7 @@ import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPrefe
 import { sendDueDigests } from "./scheduled/send-digests";
 import { BookmarkWorkflow } from "./workflows/bookmark-workflow";
 import { handleMcpRequest } from "./mcp/server";
+import { oauthAuthenticateHeader, protectedResourceMetadata } from "./utils/auth/oauth";
 
 export { BookmarkWorkflow };
 
@@ -65,6 +66,7 @@ app.use(
       "MCP-Protocol-Version",
       "Mcp-Session-Id",
     ],
+    exposeHeaders: ["WWW-Authenticate", "MCP-Protocol-Version", "Mcp-Session-Id"],
     credentials: true,
   }),
 );
@@ -86,6 +88,13 @@ app.onError((e, c) => {
   // TODO: refine error handling
   console.error("Error in Hono:", JSON.stringify(e));
   if (e instanceof HTTPException && e.status < 500) {
+    if (e.status === 401) {
+      c.header(
+        "WWW-Authenticate",
+        oauthAuthenticateHeader(c, c.req.path.startsWith("/mcp") ? "/mcp" : ""),
+      );
+    }
+
     return c.json(
       {
         status: e.status,
@@ -106,12 +115,20 @@ app.onError((e, c) => {
 
 // Public routes (no auth required)
 openapi.post("/v1/contact", SendContactEmail);
-// Apply auth middleware to all routes
-app.use("*", requireAuth);
 
-// Register MCP endpoint
+// OAuth 2.0 Protected Resource Metadata (RFC 9728) for MCP clients.
+app.get("/.well-known/oauth-protected-resource", (c) => c.json(protectedResourceMetadata(c, "")));
+app.get("/.well-known/oauth-protected-resource/mcp", (c) =>
+  c.json(protectedResourceMetadata(c, "/mcp")),
+);
+
+// Register MCP endpoint with OAuth-specific token validation.
+app.use("/mcp", requireMcpAuth);
 app.post("/mcp", handleMcpRequest);
 app.get("/mcp", (c) => c.text("SSE stream is not supported by this MCP endpoint", 405));
+
+// Apply auth middleware to all routes
+app.use("*", requireAuth);
 
 // Register bookmark endpoints
 openapi.get("/v1/bookmarks", GetBookmarks);
