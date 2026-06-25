@@ -88,11 +88,8 @@ app.onError((e, c) => {
   // TODO: refine error handling
   console.error("Error in Hono:", JSON.stringify(e));
   if (e instanceof HTTPException && e.status < 500) {
-    if (e.status === 401) {
-      c.header(
-        "WWW-Authenticate",
-        oauthAuthenticateHeader(c, c.req.path.startsWith("/mcp") ? "/mcp" : ""),
-      );
+    if (e.status === 401 && c.req.path.startsWith("/mcp")) {
+      c.header("WWW-Authenticate", oauthAuthenticateHeader(c, "/mcp"));
     }
 
     return c.json(
