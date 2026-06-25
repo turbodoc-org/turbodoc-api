@@ -59,7 +59,7 @@ src/
 │   └── v1/
 │       └── bookmarks/          # Bookmark CRUD operations
 │           ├── createBookmark.ts
-│           ├── deleteBookmark.ts  
+│           ├── deleteBookmark.ts
 │           ├── getBookmarks.ts
 │           ├── getOgImage.ts
 │           └── updateBookmark.ts
@@ -109,17 +109,17 @@ The API uses Supabase PostgreSQL with the following main table:
 
 ### `bookmarks`
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Primary key |
-| `user_id` | UUID | User identifier (FK) |
-| `title` | TEXT | Bookmark title |
-| `url` | TEXT | Bookmark URL |
-| `time_added` | BIGINT | Unix timestamp |
-| `tags` | TEXT | Comma-separated tags |
-| `status` | TEXT | Status: 'unread', 'read', 'archived' |
-| `created_at` | TIMESTAMP | Creation timestamp |
-| `updated_at` | TIMESTAMP | Last update timestamp |
+| Column       | Type      | Description                          |
+| ------------ | --------- | ------------------------------------ |
+| `id`         | UUID      | Primary key                          |
+| `user_id`    | UUID      | User identifier (FK)                 |
+| `title`      | TEXT      | Bookmark title                       |
+| `url`        | TEXT      | Bookmark URL                         |
+| `time_added` | BIGINT    | Unix timestamp                       |
+| `tags`       | TEXT      | Comma-separated tags                 |
+| `status`     | TEXT      | Status: 'unread', 'read', 'archived' |
+| `created_at` | TIMESTAMP | Creation timestamp                   |
+| `updated_at` | TIMESTAMP | Last update timestamp                |
 
 **Security Features:**
 
@@ -130,15 +130,15 @@ The API uses Supabase PostgreSQL with the following main table:
 
 ## 🔧 Development Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build for production |
-| `npm run preview` | Build and preview locally with Wrangler |
-| `npm run deploy` | Build and deploy to Cloudflare Pages |
-| `npm run cf-typegen` | Generate Cloudflare Worker types |
-| `npm run migrate` | Run Supabase migrations |
-| `npm run format` | Format code with Biome |
+| Command              | Description                              |
+| -------------------- | ---------------------------------------- |
+| `npm run dev`        | Start development server with hot reload |
+| `npm run build`      | Build for production                     |
+| `npm run preview`    | Build and preview locally with Wrangler  |
+| `npm run deploy`     | Build and deploy to Cloudflare Pages     |
+| `npm run cf-typegen` | Generate Cloudflare Worker types         |
+| `npm run migrate`    | Run Supabase migrations                  |
+| `npm run format`     | Format code with Biome                   |
 
 ## 🚀 Deployment
 
