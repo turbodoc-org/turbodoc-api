@@ -1,3 +1,5 @@
+import type { OAuthProtectedResourceMetadata } from "@modelcontextprotocol/sdk/shared/auth.js";
+
 type OAuthContext = {
   env: Cloudflare.Env;
   req: {
@@ -10,6 +12,7 @@ export type JwtClaims = {
   client_id?: string;
   exp?: number;
   iss?: string;
+  scope?: string;
   [claim: string]: unknown;
 };
 
@@ -46,7 +49,10 @@ export const protectedResourceMetadataUrl = (c: OAuthContext, resourcePath = "/m
   return `${url.origin}/.well-known/oauth-protected-resource${normalizedPath}`;
 };
 
-export const protectedResourceMetadata = (c: OAuthContext, resourcePath = "/mcp") => {
+export const protectedResourceMetadata = (
+  c: OAuthContext,
+  resourcePath = "/mcp",
+): OAuthProtectedResourceMetadata => {
   const url = new URL(c.req.url);
   const normalizedPath = resourcePath.startsWith("/") ? resourcePath : `/${resourcePath}`;
   const resource = `${url.origin}${normalizedPath}`;

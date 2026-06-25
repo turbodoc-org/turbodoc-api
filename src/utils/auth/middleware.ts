@@ -2,6 +2,8 @@ import { supabaseAdminClient } from "../clients/supabase/admin";
 import { AppContext } from "../../types/app-context";
 import { HTTPException } from "hono/http-exception";
 import { createMiddleware } from "hono/factory";
+import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import type { OAuthTokenVerifier } from "@modelcontextprotocol/sdk/server/auth/provider.js";
 import {
   decodeJwtClaims,
   mcpResourceUrl,
@@ -31,22 +33,8 @@ const authenticateSupabaseToken = async (context: AppContext) => {
   return { token };
 };
 
-export const requireAuth = createMiddleware(async (context: AppContext, next) => {
-  try {
-    await authenticateSupabaseToken(context);
-    await next();
-  } catch (error) {
-    console.error("Error in auth middleware:", error);
-    if (error instanceof HTTPException) {
-      throw error;
-    }
-    throw new HTTPException(500, { message: "Internal server error." });
-  }
-});
-
-export const requireMcpAuth = createMiddleware(async (context: AppContext, next) => {
-  try {
-    const { token } = await authenticateSupabaseToken(context);
+const mcpTokenVerifier = (context: AppContext): OAuthTokenVerifier => ({
+  async verifyAccessToken(token: string): Promise<AuthInfo> {
     const claims = decodeJwtClaims(token);
 
     if (!claims) {
@@ -70,6 +58,34 @@ export const requireMcpAuth = createMiddleware(async (context: AppContext, next)
       });
     }
 
+    return {
+      token,
+      clientId: claims.client_id,
+      scopes: typeof claims.scope === "string" ? claims.scope.split(" ").filter(Boolean) : [],
+      expiresAt: claims.exp,
+      resource: new URL(resource),
+      extra: { userId: context.get("user").id },
+    };
+  },
+});
+
+export const requireAuth = createMiddleware(async (context: AppContext, next) => {
+  try {
+    await authenticateSupabaseToken(context);
+    await next();
+  } catch (error) {
+    console.error("Error in auth middleware:", error);
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    throw new HTTPException(500, { message: "Internal server error." });
+  }
+});
+
+export const requireMcpAuth = createMiddleware(async (context: AppContext, next) => {
+  try {
+    const { token } = await authenticateSupabaseToken(context);
+    context.set("mcpAuthInfo", await mcpTokenVerifier(context).verifyAccessToken(token));
     await next();
   } catch (error) {
     console.error("Error in MCP auth middleware:", error);
