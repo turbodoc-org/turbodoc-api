@@ -120,8 +120,7 @@ app.get("/.well-known/oauth-protected-resource/mcp", (c) =>
 );
 
 // Register MCP endpoint with OAuth-specific token validation.
-app.use("/mcp", requireMcpAuth);
-app.post("/mcp", handleMcpRequest);
+app.post("/mcp", requireMcpAuth, handleMcpRequest);
 app.get("/mcp", (c) => c.text("SSE stream is not supported by this MCP endpoint", 405));
 
 // Apply auth middleware to all routes
