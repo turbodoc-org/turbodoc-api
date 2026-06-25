@@ -61,6 +61,10 @@ export class DeleteDiagram extends OpenAPIRoute {
       const authToken = c.get("authToken");
       const supabase = supabaseApiClient(authToken, c);
 
+      if (!id) {
+        throw new HTTPException(400, { message: "Diagram ID is required" });
+      }
+
       const { data, error } = await supabase
         .from("diagrams")
         .delete()

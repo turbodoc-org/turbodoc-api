@@ -19,31 +19,18 @@ export class GetDiagrams extends OpenAPIRoute {
                   .array(
                     z
                       .object({
-                        id: z
-                          .string()
-                          .describe("Unique identifier for the diagram"),
-                        user_id: z
-                          .string()
-                          .describe("ID of the user who owns this diagram"),
+                        id: z.string().describe("Unique identifier for the diagram"),
+                        user_id: z.string().describe("ID of the user who owns this diagram"),
                         title: z.string().describe("Title of the diagram"),
-                        shapes: z
-                          .array(z.any())
-                          .describe("Array of diagram shapes"),
-                        connections: z
-                          .array(z.any())
-                          .describe("Array of diagram connections"),
-                        thumbnail: z
-                          .string()
-                          .nullable()
-                          .describe("Base64 encoded thumbnail image"),
-                        created_at: z
-                          .string()
-                          .describe("ISO timestamp when record was created"),
+                        diagram_type: z.string().describe("Diagram format"),
+                        mermaid_source: z.string().nullable().describe("Mermaid.js source"),
+                        shapes: z.array(z.any()).describe("Array of diagram shapes"),
+                        connections: z.array(z.any()).describe("Array of diagram connections"),
+                        thumbnail: z.string().nullable().describe("Base64 encoded thumbnail image"),
+                        created_at: z.string().describe("ISO timestamp when record was created"),
                         updated_at: z
                           .string()
-                          .describe(
-                            "ISO timestamp when record was last updated",
-                          ),
+                          .describe("ISO timestamp when record was last updated"),
                       })
                       .describe("Diagram object"),
                   )

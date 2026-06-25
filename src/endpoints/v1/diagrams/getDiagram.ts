@@ -22,29 +22,16 @@ export class GetDiagram extends OpenAPIRoute {
               .object({
                 data: z
                   .object({
-                    id: z
-                      .string()
-                      .describe("Unique identifier for the diagram"),
-                    user_id: z
-                      .string()
-                      .describe("ID of the user who owns this diagram"),
+                    id: z.string().describe("Unique identifier for the diagram"),
+                    user_id: z.string().describe("ID of the user who owns this diagram"),
                     title: z.string().describe("Title of the diagram"),
-                    shapes: z
-                      .array(z.any())
-                      .describe("Array of diagram shapes"),
-                    connections: z
-                      .array(z.any())
-                      .describe("Array of diagram connections"),
-                    thumbnail: z
-                      .string()
-                      .nullable()
-                      .describe("Base64 encoded thumbnail image"),
-                    created_at: z
-                      .string()
-                      .describe("ISO timestamp when record was created"),
-                    updated_at: z
-                      .string()
-                      .describe("ISO timestamp when record was last updated"),
+                    diagram_type: z.string().describe("Diagram format"),
+                    mermaid_source: z.string().nullable().describe("Mermaid.js source"),
+                    shapes: z.array(z.any()).describe("Array of diagram shapes"),
+                    connections: z.array(z.any()).describe("Array of diagram connections"),
+                    thumbnail: z.string().nullable().describe("Base64 encoded thumbnail image"),
+                    created_at: z.string().describe("ISO timestamp when record was created"),
+                    updated_at: z.string().describe("ISO timestamp when record was last updated"),
                   })
                   .describe("Diagram object"),
               })
@@ -83,6 +70,10 @@ export class GetDiagram extends OpenAPIRoute {
       const authToken = c.get("authToken");
       const id = c.req.param("id");
       const supabase = supabaseApiClient(authToken, c);
+
+      if (!id) {
+        throw new HTTPException(400, { message: "Diagram ID is required" });
+      }
 
       const { data, error } = await supabase
         .from("diagrams")

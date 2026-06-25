@@ -23,29 +23,16 @@ export class DuplicateDiagram extends OpenAPIRoute {
               .object({
                 data: z
                   .object({
-                    id: z
-                      .string()
-                      .describe("Unique identifier for the new diagram"),
-                    user_id: z
-                      .string()
-                      .describe("ID of the user who owns this diagram"),
+                    id: z.string().describe("Unique identifier for the new diagram"),
+                    user_id: z.string().describe("ID of the user who owns this diagram"),
                     title: z.string().describe("Title of the diagram"),
-                    shapes: z
-                      .array(z.any())
-                      .describe("Array of diagram shapes"),
-                    connections: z
-                      .array(z.any())
-                      .describe("Array of diagram connections"),
-                    thumbnail: z
-                      .string()
-                      .nullable()
-                      .describe("Base64 encoded thumbnail image"),
-                    created_at: z
-                      .string()
-                      .describe("ISO timestamp when record was created"),
-                    updated_at: z
-                      .string()
-                      .describe("ISO timestamp when record was last updated"),
+                    diagram_type: z.string().describe("Diagram format"),
+                    mermaid_source: z.string().nullable().describe("Mermaid.js source"),
+                    shapes: z.array(z.any()).describe("Array of diagram shapes"),
+                    connections: z.array(z.any()).describe("Array of diagram connections"),
+                    thumbnail: z.string().nullable().describe("Base64 encoded thumbnail image"),
+                    created_at: z.string().describe("ISO timestamp when record was created"),
+                    updated_at: z.string().describe("ISO timestamp when record was last updated"),
                   })
                   .describe("Duplicated diagram object"),
               })
@@ -85,6 +72,10 @@ export class DuplicateDiagram extends OpenAPIRoute {
       const authToken = c.get("authToken");
       const supabase = supabaseApiClient(authToken, c);
 
+      if (!id) {
+        throw new HTTPException(400, { message: "Diagram ID is required" });
+      }
+
       // First, fetch the original diagram
       const { data: originalDiagram, error: fetchError } = await supabase
         .from("diagrams")
@@ -99,14 +90,15 @@ export class DuplicateDiagram extends OpenAPIRoute {
       }
 
       // Create a duplicate with a new title
-      const duplicatedDiagram: Database["public"]["Tables"]["diagrams"]["Insert"] =
-        {
-          user_id: user.id,
-          title: `${originalDiagram.title} (Copy)`,
-          shapes: originalDiagram.shapes,
-          connections: originalDiagram.connections,
-          thumbnail: originalDiagram.thumbnail,
-        };
+      const duplicatedDiagram: Database["public"]["Tables"]["diagrams"]["Insert"] = {
+        user_id: user.id,
+        title: `${originalDiagram.title} (Copy)`,
+        diagram_type: originalDiagram.diagram_type,
+        mermaid_source: originalDiagram.mermaid_source,
+        shapes: originalDiagram.shapes,
+        connections: originalDiagram.connections,
+        thumbnail: originalDiagram.thumbnail,
+      };
 
       const { data, error } = await supabase
         .from("diagrams")

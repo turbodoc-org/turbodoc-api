@@ -23,6 +23,8 @@ export interface DiagramData {
   id?: string;
   user_id?: string;
   title: string;
+  diagram_type?: "canvas" | "mermaid";
+  mermaid_source?: string | null;
   shapes: DiagramShape[];
   connections: DiagramConnection[];
   thumbnail?: string | null;

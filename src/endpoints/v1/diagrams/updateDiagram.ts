@@ -23,18 +23,15 @@ export class UpdateDiagram extends OpenAPIRoute {
                   .min(1, "Title cannot be empty")
                   .optional()
                   .describe("Title of the diagram"),
-                shapes: z
-                  .array(z.any())
-                  .optional()
-                  .describe("Array of diagram shapes"),
-                connections: z
-                  .array(z.any())
-                  .optional()
-                  .describe("Array of diagram connections"),
-                thumbnail: z
+                diagram_type: z.enum(["canvas", "mermaid"]).optional().describe("Diagram format"),
+                mermaid_source: z
                   .string()
+                  .nullable()
                   .optional()
-                  .describe("Base64 encoded thumbnail image"),
+                  .describe("Mermaid.js source when diagram_type is mermaid"),
+                shapes: z.array(z.any()).optional().describe("Array of diagram shapes"),
+                connections: z.array(z.any()).optional().describe("Array of diagram connections"),
+                thumbnail: z.string().optional().describe("Base64 encoded thumbnail image"),
               })
               .describe("Diagram update request"),
           },
@@ -50,29 +47,16 @@ export class UpdateDiagram extends OpenAPIRoute {
               .object({
                 data: z
                   .object({
-                    id: z
-                      .string()
-                      .describe("Unique identifier for the diagram"),
-                    user_id: z
-                      .string()
-                      .describe("ID of the user who owns this diagram"),
+                    id: z.string().describe("Unique identifier for the diagram"),
+                    user_id: z.string().describe("ID of the user who owns this diagram"),
                     title: z.string().describe("Title of the diagram"),
-                    shapes: z
-                      .array(z.any())
-                      .describe("Array of diagram shapes"),
-                    connections: z
-                      .array(z.any())
-                      .describe("Array of diagram connections"),
-                    thumbnail: z
-                      .string()
-                      .nullable()
-                      .describe("Base64 encoded thumbnail image"),
-                    created_at: z
-                      .string()
-                      .describe("ISO timestamp when record was created"),
-                    updated_at: z
-                      .string()
-                      .describe("ISO timestamp when record was last updated"),
+                    diagram_type: z.string().describe("Diagram format"),
+                    mermaid_source: z.string().nullable().describe("Mermaid.js source"),
+                    shapes: z.array(z.any()).describe("Array of diagram shapes"),
+                    connections: z.array(z.any()).describe("Array of diagram connections"),
+                    thumbnail: z.string().nullable().describe("Base64 encoded thumbnail image"),
+                    created_at: z.string().describe("ISO timestamp when record was created"),
+                    updated_at: z.string().describe("ISO timestamp when record was last updated"),
                   })
                   .describe("Updated diagram object"),
               })
@@ -124,11 +108,16 @@ export class UpdateDiagram extends OpenAPIRoute {
       const supabase = supabaseApiClient(authToken, c);
       const body = await c.req.json();
 
-      const { title, shapes, connections, thumbnail } = body;
+      if (!id) {
+        throw new HTTPException(400, { message: "Diagram ID is required" });
+      }
 
-      const updatedDiagram: Database["public"]["Tables"]["diagrams"]["Update"] =
-        {};
+      const { title, diagram_type, mermaid_source, shapes, connections, thumbnail } = body;
+
+      const updatedDiagram: Database["public"]["Tables"]["diagrams"]["Update"] = {};
       if (title !== undefined) updatedDiagram.title = title;
+      if (diagram_type !== undefined) updatedDiagram.diagram_type = diagram_type;
+      if (mermaid_source !== undefined) updatedDiagram.mermaid_source = mermaid_source;
       if (shapes !== undefined) updatedDiagram.shapes = shapes;
       if (connections !== undefined) updatedDiagram.connections = connections;
       if (thumbnail !== undefined) updatedDiagram.thumbnail = thumbnail;
