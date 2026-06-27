@@ -44,7 +44,6 @@ export const protectedResourceMetadata = (
     resource,
     resource_name: "Turbodoc MCP API",
     authorization_servers: [mcpAuthorizationServerIssuer(c)],
-    scopes_supported: ["openid", "email", "profile"],
     bearer_methods_supported: ["header"],
     resource_documentation: c.env.MCP_RESOURCE_DOCUMENTATION_URL ?? "https://turbodoc.ai",
   };
