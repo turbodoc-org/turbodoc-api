@@ -4,9 +4,10 @@ import { Database } from "../../../types/database.types";
 
 export const supabaseApiClient = (authToken: string, c: AppContext) =>
   createClient<Database>(c.env.SUPABASE_URL, c.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
+    accessToken: async () => authToken,
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
     },
   });

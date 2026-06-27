@@ -33,16 +33,7 @@ import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPrefe
 import { sendDueDigests } from "./scheduled/send-digests";
 import { BookmarkWorkflow } from "./workflows/bookmark-workflow";
 import { handleMcpRequest } from "./mcp/server";
-import {
-  handleOAuthAuthorize,
-  handleOAuthToken,
-  registerOAuthClient,
-} from "./utils/auth/mcp-oauth";
-import {
-  authorizationServerMetadata,
-  oauthAuthenticateHeader,
-  protectedResourceMetadata,
-} from "./utils/auth/oauth";
+import { oauthAuthenticateHeader, protectedResourceMetadata } from "./utils/auth/oauth";
 import type { AppEnv } from "./types/app-context";
 
 export { BookmarkWorkflow };
@@ -96,8 +87,6 @@ const openapi = fromHono(app, {
 });
 
 app.onError((e, c) => {
-  // TODO: refine error handling
-  console.error("Error in Hono:", JSON.stringify(e));
   if (e instanceof HTTPException && e.status < 500) {
     if (e.status === 401 && c.req.path.startsWith("/mcp")) {
       c.header("WWW-Authenticate", oauthAuthenticateHeader(c, "/mcp"));
@@ -111,6 +100,11 @@ app.onError((e, c) => {
       { status: e.status },
     );
   }
+
+  console.error({
+    event: "request_error",
+    message: e instanceof Error ? e.message : "Unknown request error",
+  });
 
   return c.json(
     {
@@ -129,16 +123,6 @@ app.get("/.well-known/oauth-protected-resource", (c) => c.json(protectedResource
 app.get("/.well-known/oauth-protected-resource/mcp", (c) =>
   c.json(protectedResourceMetadata(c, "/mcp")),
 );
-
-// OAuth 2.0 Authorization Server Metadata (RFC 8414) for MCP clients.
-app.get("/.well-known/oauth-authorization-server", (c) => c.json(authorizationServerMetadata(c)));
-app.get("/.well-known/openid-configuration", (c) => c.json(authorizationServerMetadata(c)));
-app.post("/oauth/register", async (c) => {
-  const metadata = await c.req.json().catch(() => ({}));
-  return c.json(await registerOAuthClient(c, metadata), 201);
-});
-app.get("/oauth/authorize", handleOAuthAuthorize);
-app.post("/oauth/token", handleOAuthToken);
 
 // Register MCP endpoint with OAuth-specific token validation.
 app.post("/mcp", requireMcpAuth, handleMcpRequest);
