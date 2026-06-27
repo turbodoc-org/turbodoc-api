@@ -1,7 +1,14 @@
-import type { OAuthProtectedResourceMetadata } from "@modelcontextprotocol/sdk/shared/auth.js";
+import type {
+  OAuthMetadata,
+  OAuthProtectedResourceMetadata,
+} from "@modelcontextprotocol/sdk/shared/auth.js";
+
+type McpOAuthEnv = Cloudflare.Env & {
+  MCP_RESOURCE_DOCUMENTATION_URL?: string;
+};
 
 type OAuthContext = {
-  env: Cloudflare.Env;
+  env: McpOAuthEnv;
   req: {
     url: string;
   };
@@ -38,6 +45,10 @@ export const decodeJwtClaims = (token: string): JwtClaims | null => {
 export const supabaseAuthIssuer = (c: OAuthContext) =>
   `${trimTrailingSlash(c.env.SUPABASE_URL)}/auth/v1`;
 
+const requestOrigin = (c: OAuthContext) => new URL(c.req.url).origin;
+
+export const mcpAuthorizationServerIssuer = (c: OAuthContext) => requestOrigin(c);
+
 export const mcpResourceUrl = (c: OAuthContext) => {
   const url = new URL(c.req.url);
   return `${url.origin}/mcp`;
@@ -60,10 +71,10 @@ export const protectedResourceMetadata = (
   return {
     resource,
     resource_name: "Turbodoc MCP API",
-    authorization_servers: [supabaseAuthIssuer(c)],
+    authorization_servers: [mcpAuthorizationServerIssuer(c)],
     scopes_supported: ["openid", "email", "profile"],
     bearer_methods_supported: ["header"],
-    resource_documentation: "https://turbodoc.ai",
+    resource_documentation: c.env.MCP_RESOURCE_DOCUMENTATION_URL ?? "https://turbodoc.ai",
   };
 };
 
@@ -73,4 +84,21 @@ export const oauthAuthenticateHeader = (c: OAuthContext, resourcePath = "/mcp") 
 export const tokenAudienceMatchesResource = (audience: JwtClaims["aud"], resource: string) => {
   if (Array.isArray(audience)) return audience.includes(resource);
   return audience === resource;
+};
+
+export const authorizationServerMetadata = (c: OAuthContext): OAuthMetadata => {
+  const origin = requestOrigin(c);
+
+  return {
+    issuer: mcpAuthorizationServerIssuer(c),
+    authorization_endpoint: `${origin}/oauth/authorize`,
+    token_endpoint: `${origin}/oauth/token`,
+    registration_endpoint: `${origin}/oauth/register`,
+    scopes_supported: ["openid", "email", "profile"],
+    response_types_supported: ["code"],
+    grant_types_supported: ["authorization_code", "refresh_token"],
+    token_endpoint_auth_methods_supported: ["none"],
+    code_challenge_methods_supported: ["S256"],
+    service_documentation: c.env.MCP_RESOURCE_DOCUMENTATION_URL ?? "https://turbodoc.ai",
+  };
 };

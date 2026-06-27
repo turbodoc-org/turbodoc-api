@@ -33,12 +33,22 @@ import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPrefe
 import { sendDueDigests } from "./scheduled/send-digests";
 import { BookmarkWorkflow } from "./workflows/bookmark-workflow";
 import { handleMcpRequest } from "./mcp/server";
-import { oauthAuthenticateHeader, protectedResourceMetadata } from "./utils/auth/oauth";
+import {
+  handleOAuthAuthorize,
+  handleOAuthToken,
+  registerOAuthClient,
+} from "./utils/auth/mcp-oauth";
+import {
+  authorizationServerMetadata,
+  oauthAuthenticateHeader,
+  protectedResourceMetadata,
+} from "./utils/auth/oauth";
+import type { AppEnv } from "./types/app-context";
 
 export { BookmarkWorkflow };
 
 // Start a Hono app
-const app = new Hono<{ Bindings: Cloudflare.Env }>();
+const app = new Hono<AppEnv>();
 
 // Setup CORS middleware
 app.use(
@@ -63,6 +73,7 @@ app.use(
       "Baggage",
       "sentry-trace",
       "Accept",
+      "X-Requested-With",
       "MCP-Protocol-Version",
       "Mcp-Session-Id",
     ],
@@ -118,6 +129,16 @@ app.get("/.well-known/oauth-protected-resource", (c) => c.json(protectedResource
 app.get("/.well-known/oauth-protected-resource/mcp", (c) =>
   c.json(protectedResourceMetadata(c, "/mcp")),
 );
+
+// OAuth 2.0 Authorization Server Metadata (RFC 8414) for MCP clients.
+app.get("/.well-known/oauth-authorization-server", (c) => c.json(authorizationServerMetadata(c)));
+app.get("/.well-known/openid-configuration", (c) => c.json(authorizationServerMetadata(c)));
+app.post("/oauth/register", async (c) => {
+  const metadata = await c.req.json().catch(() => ({}));
+  return c.json(await registerOAuthClient(c, metadata), 201);
+});
+app.get("/oauth/authorize", handleOAuthAuthorize);
+app.post("/oauth/token", handleOAuthToken);
 
 // Register MCP endpoint with OAuth-specific token validation.
 app.post("/mcp", requireMcpAuth, handleMcpRequest);

@@ -58,6 +58,8 @@ export class DeleteBookmark extends OpenAPIRoute {
     try {
       const user = c.get("user");
       const id = c.req.param("id");
+      if (!id) throw new HTTPException(400, { message: "Bookmark ID is required" });
+
       const authToken = c.get("authToken");
       const supabase = supabaseApiClient(authToken, c);
 

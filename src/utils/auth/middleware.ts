@@ -10,6 +10,7 @@ import {
   supabaseAuthIssuer,
   tokenAudienceMatchesResource,
 } from "./oauth";
+import { verifyMcpAccessToken } from "./mcp-oauth";
 
 const authenticateSupabaseToken = async (context: AppContext) => {
   console.log("Checking authentication token...");
@@ -84,7 +85,23 @@ export const requireAuth = createMiddleware(async (context: AppContext, next) =>
 
 export const requireMcpAuth = createMiddleware(async (context: AppContext, next) => {
   try {
-    const { token } = await authenticateSupabaseToken(context);
+    const authHeader = context.req.header("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new HTTPException(401, {
+        message: "Invalid authorization header.",
+      });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const mcpAuthInfo = await verifyMcpAccessToken(context, token);
+
+    if (mcpAuthInfo) {
+      context.set("mcpAuthInfo", mcpAuthInfo);
+      await next();
+      return;
+    }
+
+    await authenticateSupabaseToken(context);
     context.set("mcpAuthInfo", await mcpTokenVerifier(context).verifyAccessToken(token));
     await next();
   } catch (error) {

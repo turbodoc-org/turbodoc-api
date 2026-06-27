@@ -163,6 +163,26 @@ Configure these in your Cloudflare Pages dashboard:
 - `SUPABASE_URL`: Your Supabase project URL
 - `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key
 - `SUPABASE_ANON_KEY`: Supabase anonymous key
+- `MCP_OAUTH_SIGNING_SECRET`: Optional secret for signing stateless MCP OAuth client IDs, codes, and tokens. Defaults to `SUPABASE_SECRET_KEY`
+- `TURBODOC_WEB_URL`: Optional web app URL used for MCP OAuth login redirects. Defaults to `https://turbodoc.ai`
+- `MCP_RESOURCE_DOCUMENTATION_URL`: Optional documentation URL advertised in MCP OAuth metadata
+
+### MCP OAuth
+
+The `/mcp` endpoint advertises OAuth 2.0 Protected Resource Metadata at
+`/.well-known/oauth-protected-resource/mcp`. The API also acts as the OAuth
+authorization server for MCP clients:
+
+- `GET /.well-known/oauth-authorization-server` returns Authorization Server Metadata
+- `POST /oauth/register` supports Dynamic Client Registration for public MCP clients
+- `GET /oauth/authorize` redirects unauthenticated users to `https://turbodoc.ai/auth/login`
+- `POST /oauth/token` exchanges authorization codes for Turbodoc-issued MCP access tokens
+
+The web login page completes the flow by approving the pending OAuth request with
+the signed-in Supabase session, then redirecting the user back to the MCP
+client's `redirect_uri`. MCP OAuth client IDs, authorization codes, access
+tokens, and refresh tokens are stateless signed tokens; no MCP OAuth database
+tables are required.
 
 ## 🛡️ Authentication & Security
 
