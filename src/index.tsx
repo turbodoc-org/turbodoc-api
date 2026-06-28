@@ -16,6 +16,7 @@ import { CreateNote } from "./endpoints/v1/notes/createNote";
 import { UpdateNote } from "./endpoints/v1/notes/updateNote";
 import { DeleteNote } from "./endpoints/v1/notes/deleteNote";
 import { BatchNotes } from "./endpoints/v1/notes/batchNotes";
+import { TranscribeAudio } from "./endpoints/v1/notes/transcribeAudio";
 import { GetTags } from "./endpoints/v1/tags/getTags";
 import { GetCodeSnippets } from "./endpoints/v1/code-snippets/getCodeSnippets";
 import { CreateCodeSnippet } from "./endpoints/v1/code-snippets/createCodeSnippet";
@@ -28,6 +29,7 @@ import { UpdateDiagram } from "./endpoints/v1/diagrams/updateDiagram";
 import { DeleteDiagram } from "./endpoints/v1/diagrams/deleteDiagram";
 import { DuplicateDiagram } from "./endpoints/v1/diagrams/duplicateDiagram";
 import { SendContactEmail } from "./endpoints/v1/contact/sendContactEmail";
+import { GetUserStats } from "./endpoints/v1/users/getUserStats";
 import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences";
 import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
 import { sendDueDigests } from "./scheduled/send-digests";
@@ -131,6 +133,9 @@ app.get("/mcp", (c) => c.text("SSE stream is not supported by this MCP endpoint"
 // Apply auth middleware to all routes
 app.use("*", requireAuth);
 
+// Register user endpoint
+openapi.get("/v1/users/stats", GetUserStats);
+
 // Register bookmark endpoints
 openapi.get("/v1/bookmarks", GetBookmarks);
 openapi.get("/v1/bookmarks/search", SearchBookmarks);
@@ -145,6 +150,7 @@ openapi.get("/v1/notes", GetNotes);
 openapi.get("/v1/notes/:id", GetNote);
 openapi.post("/v1/notes", CreateNote);
 openapi.post("/v1/notes/batch", BatchNotes);
+openapi.post("/v1/notes/transcribe", TranscribeAudio);
 openapi.put("/v1/notes/:id", UpdateNote);
 openapi.delete("/v1/notes/:id", DeleteNote);
 
