@@ -13,7 +13,7 @@ import { supabaseApiClient } from "../../../utils/clients/supabase/api";
  *   - bookmark_count: total bookmarks owned by the user
  *   - note_count:      total notes owned by the user
  *   - tag_count:        number of distinct tags in use
- *   - favorite_count:   number of favorited bookmarks
+ *   - favorite_count:   number of favorited items (bookmarks + notes combined)
  *   - member_since:     ISO timestamp the user's Supabase auth account was
  *                       created (for the "Member Since" profile field)
  */
@@ -62,30 +62,48 @@ export class GetUserStats extends OpenAPIRoute {
       const supabase = supabaseApiClient(authToken, c);
 
       // Run count queries (head: true returns only the count) in parallel.
-      const [bookmarksRes, notesRes, favoriteRes, tagsRowsRes] = await Promise.all([
-        supabase
-          .from("bookmarks")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id),
-        supabase.from("notes").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase
-          .from("bookmarks")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("is_favorite", true),
-        // Distinct tags are derived from the bookmarks.tags column, which
-        // stores tags as a pipe-separated string. Fetch the rows once.
-        supabase
-          .from("bookmarks")
-          .select("tags")
-          .eq("user_id", user.id)
-          .not("tags", "is", null)
-          .neq("tags", ""),
-      ]);
+      const [bookmarksRes, notesRes, favoriteBookmarksRes, favoriteNotesRes, tagsRowsRes] =
+        await Promise.all([
+          supabase
+            .from("bookmarks")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id),
+          supabase.from("notes").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+          // Favorites span BOTH tables — bookmarks and notes both have an
+          // `is_favorite` column. Count each, then sum.
+          supabase
+            .from("bookmarks")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("is_favorite", true),
+          supabase
+            .from("notes")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("is_favorite", true),
+          // Distinct tags are derived from the bookmarks.tags column, which
+          // stores tags as a pipe-separated string. Fetch the rows once.
+          supabase
+            .from("bookmarks")
+            .select("tags")
+            .eq("user_id", user.id)
+            .not("tags", "is", null)
+            .neq("tags", ""),
+        ]);
 
-      if (bookmarksRes.error || notesRes.error || favoriteRes.error || tagsRowsRes.error) {
+      if (
+        bookmarksRes.error ||
+        notesRes.error ||
+        favoriteBookmarksRes.error ||
+        favoriteNotesRes.error ||
+        tagsRowsRes.error
+      ) {
         const firstError =
-          bookmarksRes.error || notesRes.error || favoriteRes.error || tagsRowsRes.error;
+          bookmarksRes.error ||
+          notesRes.error ||
+          favoriteBookmarksRes.error ||
+          favoriteNotesRes.error ||
+          tagsRowsRes.error;
         console.error("Error fetching user stats:", firstError);
         throw new HTTPException(500, { message: "Failed to fetch user stats" });
       }
@@ -108,7 +126,7 @@ export class GetUserStats extends OpenAPIRoute {
           bookmark_count: bookmarksRes.count ?? 0,
           note_count: notesRes.count ?? 0,
           tag_count: distinctTags.size,
-          favorite_count: favoriteRes.count ?? 0,
+          favorite_count: (favoriteBookmarksRes.count ?? 0) + (favoriteNotesRes.count ?? 0),
           member_since: memberSince,
         },
       });
