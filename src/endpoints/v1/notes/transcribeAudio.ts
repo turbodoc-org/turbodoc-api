@@ -2,16 +2,17 @@ import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
 import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
+import { Buffer } from "node:buffer";
+
+const MAX_AUDIO_BYTES = 12 * 1024 * 1024;
 
 /**
- * Transcribes an audio recording to text using Cloudflare Workers AI Whisper.
- * Whisper performs multilingual speech recognition and language identification,
- * so the transcribed text is returned in the spoken language (no translation).
+ * Transcribes an audio recording with Cloudflare Workers AI Whisper Large V3
+ * Turbo. The model detects the language and returns text in that language.
  *
  * The iOS client uploads the recording as multipart/form-data with a single
- * `audio` field containing the audio file (m4a/mp3/wav/etc.). The endpoint
- * returns the transcribed text — never translated — preserving the original
- * spoken language.
+ * `audio` field containing the audio file. The endpoint explicitly uses the
+ * transcribe task, never translate, preserving the original spoken language.
  */
 export class TranscribeAudio extends OpenAPIRoute {
   static schema = {
@@ -52,6 +53,17 @@ export class TranscribeAudio extends OpenAPIRoute {
       },
       "401": {
         description: "Unauthorized",
+        content: {
+          "application/json": {
+            schema: z.object({
+              status: z.number(),
+              message: z.string(),
+            }),
+          },
+        },
+      },
+      "413": {
+        description: "Audio recording is too large",
         content: {
           "application/json": {
             schema: z.object({
@@ -106,18 +118,24 @@ export class TranscribeAudio extends OpenAPIRoute {
         });
       }
 
+      if (audioFile.size > MAX_AUDIO_BYTES) {
+        throw new HTTPException(413, {
+          message: "Audio file is too large. Recordings must be smaller than 12 MB.",
+        });
+      }
+
       const audioBuffer = await audioFile.arrayBuffer();
       if (audioBuffer.byteLength === 0) {
         throw new HTTPException(400, { message: "Audio file is empty." });
       }
 
-      const audioInput = new Uint8Array(audioBuffer);
-
-      // Whisper auto-detects the spoken language and transcribes it as-is —
-      // it does NOT translate unless explicitly asked via `task: "translate"`.
-      const result = (await c.env.AI.run("@cf/openai/whisper", {
-        audio: audioInput,
-      })) as { text?: string };
+      // Omitting `language` makes Whisper detect it from the recording.
+      // `task: "transcribe"` preserves that language instead of translating.
+      const result = await c.env.AI.run("@cf/openai/whisper-large-v3-turbo", {
+        audio: Buffer.from(audioBuffer).toString("base64"),
+        task: "transcribe",
+        vad_filter: true,
+      });
 
       const text = (result?.text ?? "").trim();
 
