@@ -33,9 +33,13 @@ import { GetUserStats } from "./endpoints/v1/users/getUserStats";
 import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences";
 import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
 import { sendDueDigests } from "./scheduled/send-digests";
+import { BookmarkWorkflow } from "./workflows/bookmark-workflow";
 import { handleMcpRequest } from "./mcp/server";
+import { handleDigestPreview } from "./emails/digest-preview";
 import { oauthAuthenticateHeader, protectedResourceMetadata } from "./utils/auth/oauth";
 import type { AppEnv } from "./types/app-context";
+
+export { BookmarkWorkflow };
 
 // Start a Hono app
 const app = new Hono<AppEnv>();
@@ -51,7 +55,6 @@ app.use(
       const allowedOrigins = [
         "https://turbodoc.ai", // Production domain
         "https://www.turbodoc.ai", // WWW subdomain
-        "http://localhost:3000",
       ];
 
       return origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
@@ -88,10 +91,7 @@ const openapi = fromHono(app, {
         url: "https://turbodoc.ai/contact",
       },
     },
-    servers: [
-      { url: "https://api.turbodoc.ai", description: "Production" },
-      { url: "https://api-dev.turbodoc.ai", description: "Development" },
-    ],
+    servers: [{ url: "https://api.turbodoc.ai", description: "Production" }],
     externalDocs: {
       description: "Turbodoc documentation",
       url: "https://turbodoc.ai/docs",
@@ -130,6 +130,9 @@ app.onError((e, c) => {
 
 // Public routes (no auth required)
 openapi.post("/v1/contact", SendContactEmail);
+
+// Dev-only digest email preview (hostname-guarded: localhost + api-dev only)
+app.get("/dev/digest-preview", handleDigestPreview);
 
 // Discovery file for LLMs and AI crawlers (llms.txt convention)
 app.get("/llms.txt", (c) =>
