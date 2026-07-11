@@ -33,13 +33,10 @@ import { GetUserStats } from "./endpoints/v1/users/getUserStats";
 import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences";
 import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
 import { sendDueDigests } from "./scheduled/send-digests";
-import { BookmarkWorkflow } from "./workflows/bookmark-workflow";
 import { handleMcpRequest } from "./mcp/server";
 import { handleDigestPreview } from "./emails/digest-preview";
 import { oauthAuthenticateHeader, protectedResourceMetadata } from "./utils/auth/oauth";
 import type { AppEnv } from "./types/app-context";
-
-export { BookmarkWorkflow };
 
 // Start a Hono app
 const app = new Hono<AppEnv>();

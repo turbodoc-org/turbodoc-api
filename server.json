@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "ai.turbodoc/turbodoc",
-  "description": "Bookmarks, notes, code snippets, and diagrams for humans and AI agents. 22 CRUD and search tools.",
+  "description": "Bookmarks, notes, code snippets, and diagrams for humans and AI agents.",
   "repository": {
     "url": "https://github.com/turbodoc-org/turbodoc-api",
     "source": "github"

@@ -3,7 +3,6 @@ import { OpenAPIRoute } from "chanfana";
 import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
 import { renderContactEmailTemplate } from "../../../emails/contact-email-template";
-import { env } from "cloudflare:workers";
 
 export class SendContactEmail extends OpenAPIRoute {
   static schema = {
@@ -70,7 +69,7 @@ export class SendContactEmail extends OpenAPIRoute {
         message,
       });
 
-      const result = await env.EMAILER?.send({
+      const result = await c.env.EMAILER?.send({
         from: "Turbodoc Contact <noreply@send.turbodoc.ai>",
         to: [contactEmail],
         replyTo: email,
@@ -78,7 +77,7 @@ export class SendContactEmail extends OpenAPIRoute {
         html: emailHtml,
       });
 
-      await env.EMAILER?.send({
+      await c.env.EMAILER?.send({
         from: "Turbodoc Contact Confirmation <noreply@send.turbodoc.ai>",
         to: email,
         subject: `[Turbodoc Contact Confirmation] ${subject}`,
