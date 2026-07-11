@@ -1,6 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../types/database.types";
-import { renderDigestEmail } from "../emails/digest-email-template";
+import {
+  digestSubject,
+  renderDigestEmail,
+  renderDigestText,
+  type DigestEmailProps,
+} from "../emails/digest-email-template";
 
 type DigestPreferencesRow = Database["public"]["Tables"]["digest_preferences"]["Row"];
 
@@ -80,18 +85,63 @@ async function sendDigestForUser(
   now: Date,
 ) {
   const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const weekStartIso = weekStart.toISOString();
 
-  const { data: bookmarks, error } = await supabase
-    .from("bookmarks")
-    .select("title, url, summary")
-    .eq("user_id", pref.user_id)
-    .eq("content_status", "succeeded")
-    .gte("time_added", Math.floor(weekStart.getTime() / 1000))
-    .order("time_added", { ascending: false });
+  const [bookmarksRes, notesRes, snippetsRes, diagramsRes, unreadRes] = await Promise.all([
+    supabase
+      .from("bookmarks")
+      .select("title, url, summary, tags")
+      .eq("user_id", pref.user_id)
+      .eq("content_status", "succeeded")
+      .gte("time_added", Math.floor(weekStart.getTime() / 1000))
+      .order("time_added", { ascending: false }),
+    supabase
+      .from("notes")
+      .select("title")
+      .eq("user_id", pref.user_id)
+      .gte("updated_at", weekStartIso)
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("code_snippets")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", pref.user_id)
+      .gte("created_at", weekStartIso),
+    supabase
+      .from("diagrams")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", pref.user_id)
+      .gte("created_at", weekStartIso),
+    supabase
+      .from("bookmarks")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", pref.user_id)
+      .eq("status", "unread"),
+  ]);
 
-  if (error) throw error;
+  if (bookmarksRes.error) throw bookmarksRes.error;
 
-  if (!bookmarks?.length) {
+  const props: DigestEmailProps = {
+    bookmarks: (bookmarksRes.data ?? []).map((b) => ({
+      title: b.title,
+      url: b.url,
+      summary: b.summary,
+      tags: b.tags,
+    })),
+    notes: (notesRes.data ?? []).map((n) => ({ title: n.title })),
+    snippetCount: snippetsRes.count ?? 0,
+    diagramCount: diagramsRes.count ?? 0,
+    unreadCount: unreadRes.count ?? 0,
+    weekStart,
+    weekEnd: now,
+  };
+
+  const hasActivity =
+    props.bookmarks.length > 0 ||
+    props.notes.length > 0 ||
+    props.snippetCount > 0 ||
+    props.diagramCount > 0;
+
+  if (!hasActivity) {
     await supabase
       .from("digest_preferences")
       .update({ last_sent_at: now.toISOString() })
@@ -110,17 +160,12 @@ async function sendDigestForUser(
     return;
   }
 
-  const html = renderDigestEmail({
-    bookmarks: bookmarks.map((b) => ({ title: b.title, url: b.url, summary: b.summary })),
-    weekStart,
-    weekEnd: now,
-  });
-
   const result = await env.EMAILER?.send({
     from: "Turbodoc Digest <digest@mail.turbodoc.ai>",
     to: email,
-    subject: "Your weekly Turbodoc digest",
-    html,
+    subject: digestSubject(props),
+    html: renderDigestEmail(props),
+    text: renderDigestText(props),
   });
 
   if (!result) return;

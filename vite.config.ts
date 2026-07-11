@@ -16,7 +16,9 @@ export default defineConfig({
   plugins: [
     build({
       entry: "src/index.tsx",
-      entryContentBeforeHooks: [() => `import { BookmarkWorkflow } from '/src/index.tsx'`],
+      entryContentBeforeHooks: [
+        () => `import { BookmarkWorkflow } from '/src/workflows/bookmark-workflow.ts'`,
+      ],
       entryContentAfterHooks: [
         () => `
 					const merged = {}

@@ -33,12 +33,9 @@ import { GetUserStats } from "./endpoints/v1/users/getUserStats";
 import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences";
 import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
 import { sendDueDigests } from "./scheduled/send-digests";
-import { BookmarkWorkflow } from "./workflows/bookmark-workflow";
 import { handleMcpRequest } from "./mcp/server";
 import { oauthAuthenticateHeader, protectedResourceMetadata } from "./utils/auth/oauth";
 import type { AppEnv } from "./types/app-context";
-
-export { BookmarkWorkflow };
 
 // Start a Hono app
 const app = new Hono<AppEnv>();
@@ -83,7 +80,17 @@ const openapi = fromHono(app, {
     info: {
       title: "Turbodoc API",
       version: "1.0.0",
-      description: "API for Turbodoc bookmark management application",
+      description:
+        "REST API for Turbodoc, the open-source knowledge base for humans and AI agents. Manage bookmarks, markdown notes, code snippets, and diagrams. AI assistants can use the same functionality via the hosted MCP server at https://api.turbodoc.ai/mcp (OAuth 2.0, Streamable HTTP) — see https://turbodoc.ai/mcp. All endpoints require a Supabase Auth JWT bearer token unless noted otherwise.",
+      contact: {
+        name: "Turbodoc",
+        url: "https://turbodoc.ai/contact",
+      },
+    },
+    servers: [{ url: "https://api.turbodoc.ai", description: "Production" }],
+    externalDocs: {
+      description: "Turbodoc documentation",
+      url: "https://turbodoc.ai/docs",
     },
   },
 });
@@ -119,6 +126,33 @@ app.onError((e, c) => {
 
 // Public routes (no auth required)
 openapi.post("/v1/contact", SendContactEmail);
+
+// Discovery file for LLMs and AI crawlers (llms.txt convention)
+app.get("/llms.txt", (c) =>
+  c.text(`# Turbodoc API
+
+> REST API and hosted MCP server for Turbodoc, the open-source knowledge base for humans and AI agents: bookmarks, markdown notes, code snippets, and diagrams.
+
+## MCP (Model Context Protocol)
+
+- Endpoint (Streamable HTTP): https://api.turbodoc.ai/mcp
+- Auth: OAuth 2.0 Protected Resource (RFC 9728); metadata at /.well-known/oauth-protected-resource/mcp
+- Setup guide: https://turbodoc.ai/docs/mcp
+- Tool catalog: https://turbodoc.ai/mcp
+
+## REST API
+
+- OpenAPI spec: https://api.turbodoc.ai/swagger.json
+- Interactive docs: https://api.turbodoc.ai/swagger
+- Auth: Supabase JWT bearer token
+- Docs: https://turbodoc.ai/docs/api
+
+## More
+
+- Website: https://turbodoc.ai
+- Source code: https://github.com/turbodoc-org
+`),
+);
 
 // OAuth 2.0 Protected Resource Metadata (RFC 9728) for MCP clients.
 app.get("/.well-known/oauth-protected-resource", (c) => c.json(protectedResourceMetadata(c, "")));
