@@ -34,7 +34,6 @@ import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences
 import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
 import { sendDueDigests } from "./scheduled/send-digests";
 import { handleMcpRequest } from "./mcp/server";
-import { handleDigestPreview } from "./emails/digest-preview";
 import { oauthAuthenticateHeader, protectedResourceMetadata } from "./utils/auth/oauth";
 import type { AppEnv } from "./types/app-context";
 
@@ -127,9 +126,6 @@ app.onError((e, c) => {
 
 // Public routes (no auth required)
 openapi.post("/v1/contact", SendContactEmail);
-
-// Dev-only digest email preview (hostname-guarded: localhost + api-dev only)
-app.get("/dev/digest-preview", handleDigestPreview);
 
 // Discovery file for LLMs and AI crawlers (llms.txt convention)
 app.get("/llms.txt", (c) =>
