@@ -155,6 +155,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      document_revisions: {
+        Row: {
+          change_summary: string | null;
+          created_at: string;
+          device_id: string | null;
+          document_id: string;
+          id: string;
+          is_favorite: boolean;
+          markdown: string;
+          name: string | null;
+          revision_number: number;
+          tags: string | null;
+          title: string;
+          user_id: string;
+        };
+        Insert: {
+          change_summary?: string | null;
+          created_at?: string;
+          device_id?: string | null;
+          document_id: string;
+          id?: string;
+          is_favorite?: boolean;
+          markdown?: string;
+          name?: string | null;
+          revision_number: number;
+          tags?: string | null;
+          title?: string;
+          user_id: string;
+        };
+        Update: {
+          change_summary?: string | null;
+          name?: string | null;
+        };
+        Relationships: [];
+      };
       digest_preferences: {
         Row: {
           created_at: string;
@@ -193,8 +228,11 @@ export type Database = {
           content: string;
           created_at: string | null;
           id: string;
+          head_revision_id: string | null;
           is_favorite: boolean | null;
           synced_at: string | null;
+          schema_version: number;
+          last_edited_by_device: string | null;
           tags: string | null;
           title: string;
           updated_at: string | null;
@@ -205,8 +243,11 @@ export type Database = {
           content?: string;
           created_at?: string | null;
           id?: string;
+          head_revision_id?: string | null;
           is_favorite?: boolean | null;
           synced_at?: string | null;
+          schema_version?: number;
+          last_edited_by_device?: string | null;
           tags?: string | null;
           title?: string;
           updated_at?: string | null;
@@ -217,8 +258,11 @@ export type Database = {
           content?: string;
           created_at?: string | null;
           id?: string;
+          head_revision_id?: string | null;
           is_favorite?: boolean | null;
           synced_at?: string | null;
+          schema_version?: number;
+          last_edited_by_device?: string | null;
           tags?: string | null;
           title?: string;
           updated_at?: string | null;
