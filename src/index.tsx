@@ -28,6 +28,16 @@ import { CreateDiagram } from "./endpoints/v1/diagrams/createDiagram";
 import { UpdateDiagram } from "./endpoints/v1/diagrams/updateDiagram";
 import { DeleteDiagram } from "./endpoints/v1/diagrams/deleteDiagram";
 import { DuplicateDiagram } from "./endpoints/v1/diagrams/duplicateDiagram";
+import {
+  CreateDocument,
+  DeleteDocument,
+  GetDocument,
+  ListDocumentRevisions,
+  ListDocuments,
+  NameDocumentRevision,
+  RestoreDocumentRevision,
+  UpdateDocument,
+} from "./endpoints/v2/documents";
 import { SendContactEmail } from "./endpoints/v1/contact/sendContactEmail";
 import { GetUserStats } from "./endpoints/v1/users/getUserStats";
 import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences";
@@ -204,6 +214,16 @@ openapi.post("/v1/diagrams", CreateDiagram);
 openapi.put("/v1/diagrams/:id", UpdateDiagram);
 openapi.delete("/v1/diagrams/:id", DeleteDiagram);
 openapi.post("/v1/diagrams/:id/duplicate", DuplicateDiagram);
+
+// Markdown-first documents with immutable history and automatic multi-device merge.
+openapi.get("/v2/documents", ListDocuments);
+openapi.post("/v2/documents", CreateDocument);
+openapi.get("/v2/documents/:id", GetDocument);
+openapi.put("/v2/documents/:id", UpdateDocument);
+openapi.delete("/v2/documents/:id", DeleteDocument);
+openapi.get("/v2/documents/:id/revisions", ListDocumentRevisions);
+openapi.patch("/v2/documents/:id/revisions/:revisionId", NameDocumentRevision);
+openapi.post("/v2/documents/:id/revisions/:revisionId/restore", RestoreDocumentRevision);
 
 // Register digest endpoints
 openapi.get("/v1/digest/preferences", GetDigestPreferences);

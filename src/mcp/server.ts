@@ -150,6 +150,13 @@ const BatchNotesSchema = z.object({
   operations: z.array(NoteOperationSchema).min(1).max(100),
 });
 
+const RevisionSchema = z.object({
+  document_id: z.string().min(1),
+  revision_id: z.string().min(1),
+});
+
+const NameRevisionSchema = RevisionSchema.extend({ name: z.string().min(1).max(200) });
+
 const OgImageSchema = z.object({
   url: z.string().url(),
 });
@@ -618,6 +625,57 @@ const createToolDefinitions = (ctx: ToolContext) => {
             failed: results.filter((result) => !result.success).length,
           },
         };
+      },
+    }),
+    defineTool({
+      name: "list_document_revisions",
+      title: "List document revisions",
+      description: "List the immutable Markdown history for a note/document.",
+      schema: z.object({ document_id: z.string().min(1) }),
+      async handler({ document_id }, { supabase, userId }) {
+        const { data, error } = await supabase
+          .from("document_revisions")
+          .select("*")
+          .eq("document_id", document_id)
+          .eq("user_id", userId)
+          .order("revision_number", { ascending: false });
+        if (error) throw new HTTPException(500, { message: "Failed to list revisions" });
+        return { data };
+      },
+    }),
+    defineTool({
+      name: "name_document_revision",
+      title: "Name document revision",
+      description: "Give an important revision a permanent human-readable name.",
+      schema: NameRevisionSchema,
+      async handler({ document_id, revision_id, name }, { supabase, userId }) {
+        const { data, error } = await supabase
+          .from("document_revisions")
+          .update({ name })
+          .eq("id", revision_id)
+          .eq("document_id", document_id)
+          .eq("user_id", userId)
+          .select()
+          .single();
+        if (error) throw new HTTPException(404, { message: "Revision not found" });
+        return { data };
+      },
+    }),
+    defineTool({
+      name: "get_document_revision",
+      title: "Get document revision",
+      description: "Read one historical Markdown snapshot before comparing or restoring it.",
+      schema: RevisionSchema,
+      async handler({ document_id, revision_id }, { supabase, userId }) {
+        const { data, error } = await supabase
+          .from("document_revisions")
+          .select("*")
+          .eq("id", revision_id)
+          .eq("document_id", document_id)
+          .eq("user_id", userId)
+          .single();
+        if (error) throw new HTTPException(404, { message: "Revision not found" });
+        return { data };
       },
     }),
     defineTool({

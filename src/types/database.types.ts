@@ -188,12 +188,68 @@ export type Database = {
         };
         Relationships: [];
       };
+      document_revisions: {
+        Row: {
+          change_summary: string | null;
+          created_at: string;
+          device_id: string | null;
+          document_id: string;
+          id: string;
+          is_favorite: boolean;
+          markdown: string;
+          name: string | null;
+          revision_number: number;
+          tags: string | null;
+          title: string;
+          user_id: string;
+        };
+        Insert: {
+          change_summary?: string | null;
+          created_at?: string;
+          device_id?: string | null;
+          document_id: string;
+          id?: string;
+          is_favorite?: boolean;
+          markdown?: string;
+          name?: string | null;
+          revision_number: number;
+          tags?: string | null;
+          title?: string;
+          user_id: string;
+        };
+        Update: {
+          change_summary?: string | null;
+          created_at?: string;
+          device_id?: string | null;
+          document_id?: string;
+          id?: string;
+          is_favorite?: boolean;
+          markdown?: string;
+          name?: string | null;
+          revision_number?: number;
+          tags?: string | null;
+          title?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "document_revisions_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "notes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       notes: {
         Row: {
           content: string;
           created_at: string | null;
+          head_revision_id: string | null;
           id: string;
           is_favorite: boolean | null;
+          last_edited_by_device: string | null;
+          schema_version: number;
           synced_at: string | null;
           tags: string | null;
           title: string;
@@ -204,8 +260,11 @@ export type Database = {
         Insert: {
           content?: string;
           created_at?: string | null;
+          head_revision_id?: string | null;
           id?: string;
           is_favorite?: boolean | null;
+          last_edited_by_device?: string | null;
+          schema_version?: number;
           synced_at?: string | null;
           tags?: string | null;
           title?: string;
@@ -216,8 +275,11 @@ export type Database = {
         Update: {
           content?: string;
           created_at?: string | null;
+          head_revision_id?: string | null;
           id?: string;
           is_favorite?: boolean | null;
+          last_edited_by_device?: string | null;
+          schema_version?: number;
           synced_at?: string | null;
           tags?: string | null;
           title?: string;
