@@ -15,11 +15,7 @@ export class CreateNote extends OpenAPIRoute {
           "application/json": {
             schema: z
               .object({
-                title: z
-                  .string()
-                  .optional()
-                  .default("")
-                  .describe("Title of the note"),
+                title: z.string().optional().default("").describe("Title of the note"),
                 content: z
                   .string()
                   .optional()
@@ -42,18 +38,11 @@ export class CreateNote extends OpenAPIRoute {
                 data: z
                   .object({
                     id: z.string().describe("Unique identifier for the note"),
-                    user_id: z
-                      .string()
-                      .describe("ID of the user who owns this note"),
+                    user_id: z.string().describe("ID of the user who owns this note"),
                     title: z.string().describe("Title of the note"),
                     content: z.string().describe("Content of the note"),
-                    tags: z
-                      .string()
-                      .nullable()
-                      .describe("Comma-separated tags"),
-                    version: z
-                      .number()
-                      .describe("Version number for optimistic locking"),
+                    tags: z.string().nullable().describe("Comma-separated tags"),
+                    version: z.number().describe("Version number for optimistic locking"),
                     created_at: z
                       .string()
                       .nullable()
@@ -111,11 +100,7 @@ export class CreateNote extends OpenAPIRoute {
         version: 1, // Initialize all new notes with version 1
       };
 
-      const { data, error } = await supabase
-        .from("notes")
-        .insert(newNote)
-        .select()
-        .single();
+      const { data, error } = await supabase.from("notes").insert(newNote).select().single();
 
       if (error) {
         console.error("Error creating note:", error);

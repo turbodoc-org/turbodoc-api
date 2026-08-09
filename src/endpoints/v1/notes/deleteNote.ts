@@ -49,11 +49,7 @@ export class DeleteNote extends OpenAPIRoute {
       const supabase = supabaseApiClient(authToken, c);
       const { id } = c.req.param();
 
-      const { error } = await supabase
-        .from("notes")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
+      const { error } = await supabase.from("notes").delete().eq("id", id).eq("user_id", user.id);
 
       if (error) {
         console.error("Error deleting note:", error);

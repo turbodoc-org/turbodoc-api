@@ -18,48 +18,20 @@ export class UpdateCodeSnippet extends OpenAPIRoute {
           "application/json": {
             schema: z
               .object({
-                title: z
-                  .string()
-                  .min(1)
-                  .optional()
-                  .describe("Title of the code snippet"),
+                title: z.string().min(1).optional().describe("Title of the code snippet"),
                 code: z.string().min(1).optional().describe("The code content"),
-                language: z
-                  .string()
-                  .optional()
-                  .describe("Programming language of the code"),
-                theme: z
-                  .string()
-                  .optional()
-                  .describe("Theme for syntax highlighting"),
+                language: z.string().optional().describe("Programming language of the code"),
+                theme: z.string().optional().describe("Theme for syntax highlighting"),
                 background_type: z
                   .string()
                   .optional()
                   .describe("Type of background (gradient, solid, image)"),
-                background_value: z
-                  .string()
-                  .optional()
-                  .describe("CSS value for the background"),
-                padding: z
-                  .number()
-                  .optional()
-                  .describe("Padding around the code"),
-                show_line_numbers: z
-                  .boolean()
-                  .optional()
-                  .describe("Whether to show line numbers"),
-                font_family: z
-                  .string()
-                  .optional()
-                  .describe("Font family for the code"),
-                font_size: z
-                  .number()
-                  .optional()
-                  .describe("Font size in pixels"),
-                window_style: z
-                  .string()
-                  .optional()
-                  .describe("Window style (mac, windows, none)"),
+                background_value: z.string().optional().describe("CSS value for the background"),
+                padding: z.number().optional().describe("Padding around the code"),
+                show_line_numbers: z.boolean().optional().describe("Whether to show line numbers"),
+                font_family: z.string().optional().describe("Font family for the code"),
+                font_size: z.number().optional().describe("Font size in pixels"),
+                window_style: z.string().optional().describe("Window style (mac, windows, none)"),
               })
               .describe("Code snippet update request"),
           },
@@ -158,25 +130,20 @@ export class UpdateCodeSnippet extends OpenAPIRoute {
       }
 
       // Build update object with only provided fields
-      const updateData: Database["public"]["Tables"]["code_snippets"]["Update"] =
-        {};
+      const updateData: Database["public"]["Tables"]["code_snippets"]["Update"] = {};
 
       if (body.title !== undefined) updateData.title = body.title;
       if (body.code !== undefined) updateData.code = body.code;
       if (body.language !== undefined) updateData.language = body.language;
       if (body.theme !== undefined) updateData.theme = body.theme;
-      if (body.background_type !== undefined)
-        updateData.background_type = body.background_type;
-      if (body.background_value !== undefined)
-        updateData.background_value = body.background_value;
+      if (body.background_type !== undefined) updateData.background_type = body.background_type;
+      if (body.background_value !== undefined) updateData.background_value = body.background_value;
       if (body.padding !== undefined) updateData.padding = body.padding;
       if (body.show_line_numbers !== undefined)
         updateData.show_line_numbers = body.show_line_numbers;
-      if (body.font_family !== undefined)
-        updateData.font_family = body.font_family;
+      if (body.font_family !== undefined) updateData.font_family = body.font_family;
       if (body.font_size !== undefined) updateData.font_size = body.font_size;
-      if (body.window_style !== undefined)
-        updateData.window_style = body.window_style;
+      if (body.window_style !== undefined) updateData.window_style = body.window_style;
 
       const { data, error } = await supabase
         .from("code_snippets")

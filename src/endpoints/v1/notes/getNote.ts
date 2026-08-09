@@ -23,15 +23,10 @@ export class GetNote extends OpenAPIRoute {
                 data: z
                   .object({
                     id: z.string().describe("Unique identifier for the note"),
-                    user_id: z
-                      .string()
-                      .describe("ID of the user who owns this note"),
+                    user_id: z.string().describe("ID of the user who owns this note"),
                     title: z.string().describe("Title of the note"),
                     content: z.string().describe("Content of the note"),
-                    tags: z
-                      .string()
-                      .nullable()
-                      .describe("Comma-separated tags"),
+                    tags: z.string().nullable().describe("Comma-separated tags"),
                     created_at: z
                       .string()
                       .nullable()

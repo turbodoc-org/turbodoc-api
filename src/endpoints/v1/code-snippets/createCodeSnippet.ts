@@ -90,21 +90,20 @@ export class CreateCodeSnippet extends OpenAPIRoute {
         });
       }
 
-      const newCodeSnippet: Database["public"]["Tables"]["code_snippets"]["Insert"] =
-        {
-          user_id: user.id,
-          title,
-          code,
-          language,
-          theme,
-          background_type,
-          background_value,
-          padding,
-          show_line_numbers,
-          font_family,
-          font_size,
-          window_style,
-        };
+      const newCodeSnippet: Database["public"]["Tables"]["code_snippets"]["Insert"] = {
+        user_id: user.id,
+        title,
+        code,
+        language,
+        theme,
+        background_type,
+        background_value,
+        padding,
+        show_line_numbers,
+        font_family,
+        font_size,
+        window_style,
+      };
 
       const { data, error } = await supabase
         .from("code_snippets")

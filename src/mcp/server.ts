@@ -524,8 +524,8 @@ const createToolDefinitions = (ctx: ToolContext) => {
           query = query.gte("created_at", daysAgo.toISOString());
         }
         const sortMap = {
-          date_newest: ["updated_at", false],
-          date_oldest: ["updated_at", true],
+          date_newest: ["created_at", false],
+          date_oldest: ["created_at", true],
           alpha_asc: ["title", true],
           alpha_desc: ["title", false],
           modified: ["updated_at", false],

@@ -24,24 +24,13 @@ export class SearchBookmarks extends OpenAPIRoute {
                   .array(
                     z
                       .object({
-                        id: z
-                          .string()
-                          .describe("Unique identifier for the bookmark"),
-                        user_id: z
-                          .string()
-                          .describe("ID of the user who owns this bookmark"),
+                        id: z.string().describe("Unique identifier for the bookmark"),
+                        user_id: z.string().describe("ID of the user who owns this bookmark"),
                         title: z.string().describe("Title of the bookmark"),
                         url: z.string().describe("URL of the bookmark"),
-                        time_added: z
-                          .number()
-                          .describe("Unix timestamp when bookmark was added"),
-                        tags: z
-                          .string()
-                          .nullable()
-                          .describe("Comma-separated tags"),
-                        status: z
-                          .string()
-                          .describe("Status of the bookmark (read/unread)"),
+                        time_added: z.number().describe("Unix timestamp when bookmark was added"),
+                        tags: z.string().nullable().describe("Comma-separated tags"),
+                        status: z.string().describe("Status of the bookmark (read/unread)"),
                         created_at: z
                           .string()
                           .nullable()
@@ -49,9 +38,7 @@ export class SearchBookmarks extends OpenAPIRoute {
                         updated_at: z
                           .string()
                           .nullable()
-                          .describe(
-                            "ISO timestamp when record was last updated",
-                          ),
+                          .describe("ISO timestamp when record was last updated"),
                       })
                       .describe("Bookmark object"),
                   )

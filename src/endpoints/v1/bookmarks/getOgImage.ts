@@ -26,10 +26,7 @@ export class GetOgImage extends OpenAPIRoute {
                   .string()
                   .nullable()
                   .describe("Open Graph image URL or null if not found"),
-                title: z
-                  .string()
-                  .nullable()
-                  .describe("Open Graph title or null if not found"),
+                title: z.string().nullable().describe("Open Graph title or null if not found"),
               })
               .describe("Open Graph data"),
           },
@@ -93,7 +90,7 @@ export class GetOgImage extends OpenAPIRoute {
       // Extract Open Graph image
       let ogImage: string | null = null;
       const ogImageMatch = html.match(
-        /<meta\s+property=["\']og:image["\']\s+content=["\']([^"\']+)["\'][^>]*>/i,
+        /<meta\s+property=["']og:image["']\s+content=["']([^"']+)["'][^>]*>/i,
       );
       if (ogImageMatch && ogImageMatch[1]) {
         ogImage = ogImageMatch[1];
@@ -111,7 +108,7 @@ export class GetOgImage extends OpenAPIRoute {
       // Extract Open Graph title as fallback
       let title: string | null = null;
       const ogTitleMatch = html.match(
-        /<meta\s+property=["\']og:title["\']\s+content=["\']([^"\']+)["\'][^>]*>/i,
+        /<meta\s+property=["']og:title["']\s+content=["']([^"']+)["'][^>]*>/i,
       );
       if (ogTitleMatch && ogTitleMatch[1]) {
         title = ogTitleMatch[1];
