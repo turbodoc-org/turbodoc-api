@@ -15,10 +15,7 @@ export class GetBookmarks extends OpenAPIRoute {
           .optional()
           .default("all")
           .describe("Filter by status"),
-        is_favorite: z
-          .string()
-          .optional()
-          .describe("Filter by favorite status (true/false)"),
+        is_favorite: z.string().optional().describe("Filter by favorite status (true/false)"),
         tag: z.string().optional().describe("Filter by specific tag"),
         days: z.string().optional().describe("Filter by added in last N days"),
         sort: z
@@ -39,29 +36,16 @@ export class GetBookmarks extends OpenAPIRoute {
                   .array(
                     z
                       .object({
-                        id: z
-                          .string()
-                          .describe("Unique identifier for the bookmark"),
-                        user_id: z
-                          .string()
-                          .describe("ID of the user who owns this bookmark"),
+                        id: z.string().describe("Unique identifier for the bookmark"),
+                        user_id: z.string().describe("ID of the user who owns this bookmark"),
                         title: z.string().describe("Title of the bookmark"),
                         url: z.string().describe("URL of the bookmark"),
-                        time_added: z
-                          .number()
-                          .describe("Unix timestamp when bookmark was added"),
-                        tags: z
-                          .string()
-                          .nullable()
-                          .describe("Comma-separated tags"),
-                        status: z
-                          .string()
-                          .describe("Status of the bookmark (read/unread)"),
+                        time_added: z.number().describe("Unix timestamp when bookmark was added"),
+                        tags: z.string().nullable().describe("Comma-separated tags"),
+                        status: z.string().describe("Status of the bookmark (read/unread)"),
                         is_favorite: z
                           .boolean()
-                          .describe(
-                            "Whether the bookmark is marked as favorite",
-                          ),
+                          .describe("Whether the bookmark is marked as favorite"),
                         created_at: z
                           .string()
                           .nullable()
@@ -69,9 +53,7 @@ export class GetBookmarks extends OpenAPIRoute {
                         updated_at: z
                           .string()
                           .nullable()
-                          .describe(
-                            "ISO timestamp when record was last updated",
-                          ),
+                          .describe("ISO timestamp when record was last updated"),
                       })
                       .describe("Bookmark object"),
                   )
@@ -101,13 +83,7 @@ export class GetBookmarks extends OpenAPIRoute {
       const authToken = c.get("authToken");
       const supabase = supabaseApiClient(authToken, c);
 
-      const {
-        status = "all",
-        is_favorite,
-        tag,
-        days,
-        sort = "date_newest",
-      } = c.req.query();
+      const { status = "all", is_favorite, tag, days, sort = "date_newest" } = c.req.query();
 
       let query = supabase.from("bookmarks").select("*").eq("user_id", user.id);
 

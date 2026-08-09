@@ -20,9 +20,7 @@ export class GetTags extends OpenAPIRoute {
                     z
                       .object({
                         tag: z.string().describe("Tag name"),
-                        count: z
-                          .number()
-                          .describe("Number of times this tag has been used"),
+                        count: z.number().describe("Number of times this tag has been used"),
                       })
                       .describe("Tag object with usage count"),
                   )

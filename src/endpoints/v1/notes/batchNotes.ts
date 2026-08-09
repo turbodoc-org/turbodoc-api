@@ -6,21 +6,13 @@ import { Database } from "../../../types/database.types";
 import { supabaseApiClient } from "../../../utils/clients/supabase/api";
 
 const NoteOperationSchema = z.object({
-  operation: z
-    .enum(["create", "update", "delete"])
-    .describe("Type of operation to perform"),
-  id: z
-    .string()
-    .optional()
-    .describe("UUID of the note (required for update/delete)"),
+  operation: z.enum(["create", "update", "delete"]).describe("Type of operation to perform"),
+  id: z.string().optional().describe("UUID of the note (required for update/delete)"),
   title: z.string().optional().describe("Title of the note"),
   content: z.string().optional().describe("Content of the note"),
   tags: z.string().optional().describe("Comma-separated tags"),
   is_favorite: z.boolean().optional().describe("Whether the note is favorite"),
-  version: z
-    .number()
-    .optional()
-    .describe("Current version number for optimistic locking"),
+  version: z.number().optional().describe("Current version number for optimistic locking"),
 });
 
 const BatchResultSchema = z.object({
@@ -74,14 +66,10 @@ export class BatchNotes extends OpenAPIRoute {
           "application/json": {
             schema: z
               .object({
-                results: z
-                  .array(BatchResultSchema)
-                  .describe("Results for each operation"),
+                results: z.array(BatchResultSchema).describe("Results for each operation"),
                 summary: z.object({
                   total: z.number().describe("Total operations requested"),
-                  successful: z
-                    .number()
-                    .describe("Number of successful operations"),
+                  successful: z.number().describe("Number of successful operations"),
                   failed: z.number().describe("Number of failed operations"),
                 }),
               })
@@ -129,14 +117,13 @@ export class BatchNotes extends OpenAPIRoute {
         try {
           switch (op.operation) {
             case "create": {
-              const insertData: Database["public"]["Tables"]["notes"]["Insert"] =
-                {
-                  user_id: user.id,
-                  title: op.title || "",
-                  content: op.content || "",
-                  tags: op.tags || null,
-                  is_favorite: op.is_favorite || false,
-                };
+              const insertData: Database["public"]["Tables"]["notes"]["Insert"] = {
+                user_id: user.id,
+                title: op.title || "",
+                content: op.content || "",
+                tags: op.tags || null,
+                is_favorite: op.is_favorite || false,
+              };
 
               const { data, error } = await supabase
                 .from("notes")
@@ -165,14 +152,12 @@ export class BatchNotes extends OpenAPIRoute {
                 continue;
               }
 
-              const updateData: Database["public"]["Tables"]["notes"]["Update"] =
-                {};
+              const updateData: Database["public"]["Tables"]["notes"]["Update"] = {};
 
               if (op.title !== undefined) updateData.title = op.title;
               if (op.content !== undefined) updateData.content = op.content;
               if (op.tags !== undefined) updateData.tags = op.tags;
-              if (op.is_favorite !== undefined)
-                updateData.is_favorite = op.is_favorite;
+              if (op.is_favorite !== undefined) updateData.is_favorite = op.is_favorite;
 
               // Build query with version check if provided
               let query = supabase
@@ -194,8 +179,7 @@ export class BatchNotes extends OpenAPIRoute {
                     success: false,
                     operation: "update",
                     id: op.id,
-                    error:
-                      "Version conflict - note was modified by another client",
+                    error: "Version conflict - note was modified by another client",
                   });
                   continue;
                 }
@@ -242,8 +226,7 @@ export class BatchNotes extends OpenAPIRoute {
             success: false,
             operation: op.operation,
             id: op.id,
-            error:
-              error instanceof Error ? error.message : "Unknown error occurred",
+            error: error instanceof Error ? error.message : "Unknown error occurred",
           });
         }
       }

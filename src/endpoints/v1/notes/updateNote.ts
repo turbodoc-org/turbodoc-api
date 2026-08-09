@@ -48,21 +48,12 @@ export class UpdateNote extends OpenAPIRoute {
                 data: z
                   .object({
                     id: z.string().describe("Unique identifier for the note"),
-                    user_id: z
-                      .string()
-                      .describe("ID of the user who owns this note"),
+                    user_id: z.string().describe("ID of the user who owns this note"),
                     title: z.string().describe("Title of the note"),
                     content: z.string().describe("Content of the note"),
-                    tags: z
-                      .string()
-                      .nullable()
-                      .describe("Comma-separated tags"),
-                    is_favorite: z
-                      .boolean()
-                      .describe("Whether the note is marked as favorite"),
-                    version: z
-                      .number()
-                      .describe("Version number for optimistic locking"),
+                    tags: z.string().nullable().describe("Comma-separated tags"),
+                    is_favorite: z.boolean().describe("Whether the note is marked as favorite"),
+                    version: z.number().describe("Version number for optimistic locking"),
                     created_at: z
                       .string()
                       .nullable()
