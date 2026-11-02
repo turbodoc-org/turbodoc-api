@@ -97,20 +97,24 @@ async function sendDigestForUser(
       .order("time_added", { ascending: false }),
     supabase
       .from("notes")
-      .select("title")
+      .select("title, updated_at")
       .eq("user_id", pref.user_id)
       .gte("updated_at", weekStartIso)
       .order("updated_at", { ascending: false }),
     supabase
       .from("code_snippets")
-      .select("id", { count: "exact", head: true })
+      .select("title", { count: "exact" })
       .eq("user_id", pref.user_id)
-      .gte("created_at", weekStartIso),
+      .gte("created_at", weekStartIso)
+      .order("created_at", { ascending: false })
+      .limit(3),
     supabase
       .from("diagrams")
-      .select("id", { count: "exact", head: true })
+      .select("title", { count: "exact" })
       .eq("user_id", pref.user_id)
-      .gte("created_at", weekStartIso),
+      .gte("created_at", weekStartIso)
+      .order("created_at", { ascending: false })
+      .limit(3),
     supabase
       .from("bookmarks")
       .select("id", { count: "exact", head: true })
@@ -127,12 +131,16 @@ async function sendDigestForUser(
       summary: b.summary,
       tags: b.tags,
     })),
-    notes: (notesRes.data ?? []).map((n) => ({ title: n.title })),
+    notes: (notesRes.data ?? []).map((n) => ({ title: n.title, updatedAt: n.updated_at })),
     snippetCount: snippetsRes.count ?? 0,
     diagramCount: diagramsRes.count ?? 0,
+    snippetTitles: (snippetsRes.data ?? []).flatMap((s) => (s.title ? [s.title] : [])),
+    diagramTitles: (diagramsRes.data ?? []).map((d) => d.title),
     unreadCount: unreadRes.count ?? 0,
     weekStart,
     weekEnd: now,
+    timeZone: pref.timezone,
+    schedule: { dayOfWeek: pref.day_of_week, sendTime: pref.send_time },
   };
 
   const hasActivity =

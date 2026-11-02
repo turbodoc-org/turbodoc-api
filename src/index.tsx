@@ -46,6 +46,7 @@ import { sendDueDigests } from "./scheduled/send-digests";
 import { handleMcpRequest } from "./mcp/server";
 import { oauthAuthenticateHeader, protectedResourceMetadata } from "./utils/auth/oauth";
 import type { AppEnv } from "./types/app-context";
+import { EMAIL_ASSETS } from "./emails/email-assets";
 
 // Start a Hono app
 const app = new Hono<AppEnv>();
@@ -163,6 +164,18 @@ app.get("/llms.txt", (c) =>
 - Source code: https://github.com/turbodoc-org
 `),
 );
+
+// Static icons referenced by HTML emails (inline SVG is stripped by most mail clients).
+app.get("/email-assets/:file", (c) => {
+  const file = c.req.param("file");
+  if (!Object.hasOwn(EMAIL_ASSETS, file)) return c.notFound();
+  const data = EMAIL_ASSETS[file];
+  const bytes = Uint8Array.from(atob(data), (ch) => ch.charCodeAt(0));
+  return c.body(bytes, 200, {
+    "Content-Type": "image/png",
+    "Cache-Control": "public, max-age=31536000, immutable",
+  });
+});
 
 // OAuth 2.0 Protected Resource Metadata (RFC 9728) for MCP clients.
 app.get("/.well-known/oauth-protected-resource", (c) => c.json(protectedResourceMetadata(c, "")));
