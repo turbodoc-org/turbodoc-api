@@ -33,26 +33,21 @@ export interface DigestEmailProps {
   timeZone?: string;
   schedule?: DigestSchedule;
 }
+import {
+  LIGHT as C,
+  SANS,
+  SERIF,
+  SITE,
+  WRAP,
+  escapeHtml,
+  eyebrow,
+  footerLink,
+  hairline,
+  iconTile,
+  pillButton,
+  renderLayout,
+} from "./email-layout";
 
-// "Editorial" direction: warm paper, serif headlines, one calm accent.
-const C = {
-  paper: "#f6f3ee",
-  card: "#ffffff",
-  ink: "#171c26",
-  muted: "#5c6370",
-  faint: "#8e94a0",
-  line: "#ebe5db",
-  accentText: "#b4500a",
-  accentWash: "#fdf1e4",
-  slateWash: "#eef2f8",
-  navy: "#0e1526",
-};
-
-const SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-const SERIF = "Georgia, 'Times New Roman', Times, serif";
-
-const SITE = "https://turbodoc.ai";
-const ASSETS = "https://api.turbodoc.ai/email-assets";
 const DIGEST_SETTINGS_URL = `${SITE}/settings/digest`;
 
 const MAX_BOOKMARKS_SHOWN = 4;
@@ -62,17 +57,6 @@ const MAX_EXTRA_TITLES = 3;
 const SUMMARY_CLAMP = 180;
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  };
-  return text.replace(/[&<>"']/g, (m) => map[m]);
-}
 
 function dateParts(d: Date, timeZone: string) {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -202,14 +186,6 @@ export function digestSubject(props: DigestEmailProps): string {
   return `Your week in Turbodoc: ${summary}`;
 }
 
-function eyebrow(text: string): string {
-  return `<div style="font-family: ${SANS}; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: ${C.accentText};">${text}</div>`;
-}
-
-function hairline(): string {
-  return `<div style="height: 1px; line-height: 1px; font-size: 0; background-color: ${C.line};">&nbsp;</div>`;
-}
-
 function bookmarkRow(bookmark: DigestBookmark, isLast: boolean): string {
   const href = safeHref(bookmark.url);
   const domain = hostname(bookmark.url);
@@ -218,41 +194,35 @@ function bookmarkRow(bookmark: DigestBookmark, isLast: boolean): string {
 
   return `
     <tr>
-      <td style="padding: 20px 0; ${border} font-family: ${SANS};">
-        ${domain ? `<div style="font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.4px; color: ${C.faint};">${escapeHtml(domain)}</div>` : ""}
-        <div style="margin-top: 6px;"><a href="${href}" style="font-family: ${SERIF}; font-size: 19px; line-height: 1.35; color: ${C.ink}; text-decoration: none;">${escapeHtml(bookmark.title)}</a></div>
-        ${bookmark.summary ? `<div style="margin-top: 6px; font-size: 15px; line-height: 1.6; color: ${C.muted};">${escapeHtml(clamp(bookmark.summary, SUMMARY_CLAMP))}</div>` : ""}
-        ${tags.length ? `<div style="margin-top: 6px; font-size: 13px; line-height: 18px; color: ${C.accentText};">${tags.map((t) => `#${escapeHtml(t)}`).join("&nbsp;&nbsp; ")}</div>` : ""}
+      <td class="b-line" style="padding: 20px 0; ${border} font-family: ${SANS}; ${WRAP}">
+        ${domain ? `<div class="t-faint" style="font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.4px; color: ${C.faint};">${escapeHtml(domain)}</div>` : ""}
+        <div style="margin-top: 6px;"><a class="t-ink" href="${href}" style="font-family: ${SERIF}; font-size: 19px; line-height: 1.35; color: ${C.ink}; text-decoration: none;">${escapeHtml(bookmark.title)}</a></div>
+        ${bookmark.summary ? `<div class="t-muted" style="margin-top: 6px; font-size: 15px; line-height: 1.6; color: ${C.muted};">${escapeHtml(clamp(bookmark.summary, SUMMARY_CLAMP))}</div>` : ""}
+        ${tags.length ? `<div class="t-accent" style="margin-top: 6px; font-size: 13px; line-height: 18px; color: ${C.accentText};">${tags.map((t) => `#${escapeHtml(t)}`).join("&nbsp;&nbsp; ")}</div>` : ""}
       </td>
     </tr>`;
 }
 
-function itemRow(opts: {
-  icon: string;
-  tileColor: string;
+interface ItemRow {
+  icon: "note" | "diagram" | "code";
+  tone: "accent" | "slate";
   title: string;
   subtitle: string;
   href: string;
   isLast: boolean;
-}): string {
-  const border = opts.isLast ? "" : `border-bottom: 1px solid ${C.line};`;
+}
+
+function itemRow(row: ItemRow): string {
+  const border = row.isLast ? "" : `border-bottom: 1px solid ${C.line};`;
   return `
     <tr>
-      <td style="padding: 14px 0; ${border}">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <td class="b-line" style="padding: 14px 0; ${border}">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width: 100%;">
           <tr>
-            <td width="32" valign="middle" style="width: 32px;">
-              <table role="presentation" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td width="32" height="32" align="center" valign="middle" bgcolor="${opts.tileColor}" style="width: 32px; height: 32px; background-color: ${opts.tileColor}; border-radius: 8px;">
-                    <img src="${ASSETS}/${opts.icon}" width="16" height="16" alt="" style="display: block; width: 16px; height: 16px; border: 0;">
-                  </td>
-                </tr>
-              </table>
-            </td>
-            <td valign="middle" style="padding-left: 14px; font-family: ${SANS};">
-              <a href="${opts.href}" style="display: block; font-size: 15px; line-height: 20px; font-weight: 600; color: ${C.ink}; text-decoration: none;">${opts.title}</a>
-              <div style="margin-top: 2px; font-size: 13px; line-height: 18px; color: ${C.faint};">${opts.subtitle}</div>
+            <td width="32" valign="middle" style="width: 32px;">${iconTile(row.icon, row.tone)}</td>
+            <td valign="middle" style="padding-left: 14px; font-family: ${SANS}; ${WRAP}">
+              <a class="t-ink" href="${row.href}" style="display: block; font-size: 15px; line-height: 20px; font-weight: 600; color: ${C.ink}; text-decoration: none;">${row.title}</a>
+              <div class="t-faint" style="margin-top: 2px; font-size: 13px; line-height: 18px; color: ${C.faint};">${row.subtitle}</div>
             </td>
           </tr>
         </table>
@@ -260,15 +230,8 @@ function itemRow(opts: {
     </tr>`;
 }
 
-function pillButton(label: string, url: string): string {
-  return `
-    <table role="presentation" class="btn" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
-      <tr>
-        <td bgcolor="${C.navy}" style="background-color: ${C.navy}; border-radius: 999px;">
-          <a href="${url}" style="display: inline-block; padding: 13px 24px; font-family: ${SANS}; font-size: 15px; line-height: 20px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 999px;">${label}</a>
-        </td>
-      </tr>
-    </table>`;
+function sectionTitle(text: string): string {
+  return `<div class="t-ink" style="padding-bottom: 8px; font-family: ${SERIF}; font-size: 22px; line-height: 28px; font-weight: 400; color: ${C.ink};">${text}</div>`;
 }
 
 export function renderDigestEmail(props: DigestEmailProps): string {
@@ -290,32 +253,32 @@ export function renderDigestEmail(props: DigestEmailProps): string {
   // --- Saved this week -------------------------------------------------------
   const bookmarksSection = hasBookmarks
     ? `
-          <tr>
-            <td class="px" style="padding: 36px 48px 12px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="padding-bottom: 8px; font-family: ${SERIF}; font-size: 22px; line-height: 28px; font-weight: 400; color: ${C.ink};">Saved this week</td>
-                  <td align="right" style="padding-bottom: 8px; font-family: ${SANS}; font-size: 13px; line-height: 28px; color: ${C.faint}; white-space: nowrap;">${plural(bookmarks.length, "link")}</td>
-                </tr>
-              </table>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                ${shownBookmarks.map((b, i) => bookmarkRow(b, i === shownBookmarks.length - 1)).join("")}
-              </table>
-              ${
-                hiddenBookmarks > 0
-                  ? `<div style="padding-top: 8px; font-family: ${SANS}; font-size: 14px; line-height: 20px; font-weight: 600;"><a href="${SITE}/bookmarks" style="color: ${C.ink}; text-decoration: none;">+ ${hiddenBookmarks} more in your library →</a></div>`
-                  : ""
-              }
-            </td>
-          </tr>`
+        <tr>
+          <td class="px" style="padding: 32px 24px 12px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width: 100%;">
+              <tr>
+                <td valign="bottom">${sectionTitle("Saved this week")}</td>
+                <td class="t-faint" align="right" valign="bottom" style="padding-bottom: 12px; font-family: ${SANS}; font-size: 13px; line-height: 18px; color: ${C.faint}; text-align: right; white-space: nowrap;">${plural(bookmarks.length, "link")}</td>
+              </tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width: 100%;">
+              ${shownBookmarks.map((b, i) => bookmarkRow(b, i === shownBookmarks.length - 1)).join("")}
+            </table>
+            ${
+              hiddenBookmarks > 0
+                ? `<div style="padding-top: 8px; font-family: ${SANS}; font-size: 14px; line-height: 20px; font-weight: 600;"><a class="t-ink" href="${SITE}/bookmarks" style="color: ${C.ink}; text-decoration: none;">+ ${hiddenBookmarks} more in your library →</a></div>`
+                : ""
+            }
+          </td>
+        </tr>`
     : "";
 
   // --- Notes, snippets & diagrams -------------------------------------------
-  const rows: Parameters<typeof itemRow>[0][] = notes.slice(0, MAX_NOTES_SHOWN).map((note) => {
+  const rows: ItemRow[] = notes.slice(0, MAX_NOTES_SHOWN).map((note) => {
     const day = note.updatedAt ? shortWeekday(note.updatedAt, tz) : "";
     return {
-      icon: "note.png",
-      tileColor: C.accentWash,
+      icon: "note",
+      tone: "accent",
       title: escapeHtml(note.title || "Untitled note"),
       subtitle: day ? `Note · edited ${day}` : "Note",
       href: `${SITE}/notes`,
@@ -332,8 +295,8 @@ export function renderDigestEmail(props: DigestEmailProps): string {
       .filter(Boolean)
       .slice(0, MAX_EXTRA_TITLES);
     rows.push({
-      icon: diagramCount ? "diagram.png" : "code.png",
-      tileColor: C.slateWash,
+      icon: diagramCount ? "diagram" : "code",
+      tone: "slate",
       title: extras.join(" and "),
       subtitle: titles.length ? titles.map(escapeHtml).join(" · ") : "Saved to your library",
       href: diagramCount ? `${SITE}/diagrams` : `${SITE}/snippets`,
@@ -345,130 +308,68 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 
   const itemsSection = rows.length
     ? `
-          <tr>
-            <td class="px" style="padding: ${hasBookmarks ? "36px" : "4px"} 48px 12px;">
-              ${hasBookmarks ? `<div style="padding-bottom: 8px; font-family: ${SERIF}; font-size: 22px; line-height: 28px; font-weight: 400; color: ${C.ink};">Also this week</div>` : ""}
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                ${rows.map(itemRow).join("")}
-              </table>
-            </td>
-          </tr>`
+        <tr>
+          <td class="px" style="padding: ${hasBookmarks ? "32px" : "4px"} 24px 12px;">
+            ${hasBookmarks ? sectionTitle("Also this week") : ""}
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width: 100%;">
+              ${rows.map(itemRow).join("")}
+            </table>
+          </td>
+        </tr>`
     : "";
 
   // --- Reading list ---------------------------------------------------------
   const readingSection =
     unreadCount > 0
       ? `
-          <tr>
-            <td class="px" style="padding: ${hasBookmarks ? "36px" : "24px"} 48px 0;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${C.accentWash}" style="background-color: ${C.accentWash}; border-radius: 12px;">
-                <tr>
-                  <td class="rl" style="padding: 32px; font-family: ${SANS};">
-                    ${eyebrow("Your reading list")}
-                    <div class="h2" style="margin-top: 10px; font-family: ${SERIF}; font-size: 24px; line-height: 1.3; color: ${C.ink};">${unreadCount === 1 ? "1 unread bookmark is waiting." : `${unreadCount} unread bookmarks are waiting.`}</div>
-                    <div style="margin-top: 10px; font-size: 15px; line-height: 1.6; color: ${C.muted};">Ten minutes with your reading list beats another new tab.</div>
-                    ${pillButton("Start reading →", `${SITE}/bookmarks`)}
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>`
+        <tr>
+          <td class="px" style="padding: ${hasBookmarks ? "32px" : "24px"} 24px 0;">
+            <table role="presentation" class="bg-wash" width="100%" cellpadding="0" cellspacing="0" bgcolor="${C.accentWash}" style="width: 100%; background-color: ${C.accentWash}; border-radius: 12px;">
+              <tr>
+                <td class="rl" style="padding: 24px; font-family: ${SANS};">
+                  ${eyebrow("Your reading list")}
+                  <div class="h2 t-ink" style="margin-top: 10px; font-family: ${SERIF}; font-size: 22px; line-height: 1.3; color: ${C.ink};">${unreadCount === 1 ? "1 unread bookmark is waiting." : `${unreadCount} unread bookmarks are waiting.`}</div>
+                  <div class="t-muted" style="margin-top: 10px; font-size: 15px; line-height: 1.6; color: ${C.muted};">Ten minutes with your reading list beats another new tab.</div>
+                  ${pillButton("Start reading →", `${SITE}/bookmarks`)}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>`
       : "";
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
-  <title>Your week in Turbodoc</title>
-  <style>
-    a { text-decoration: none; }
-    @media only screen and (max-width: 620px) {
-      .outer { padding: 24px 12px 32px !important; }
-      .px { padding-left: 24px !important; padding-right: 24px !important; }
-      .hero { padding-top: 32px !important; padding-bottom: 24px !important; }
-      .h1 { font-size: 28px !important; line-height: 1.2 !important; }
-      .h2 { font-size: 22px !important; }
-      .rl { padding: 24px !important; }
-      .btn { width: 100% !important; }
-      .btn a { display: block !important; text-align: center !important; }
-      .hide-sm { display: none !important; }
-    }
-  </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: ${C.paper};">
-  <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">${escapeHtml(preheader)}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${C.paper}" style="background-color: ${C.paper};">
-    <tr>
-      <td class="outer" align="center" style="padding: 40px 12px;">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 100%;">
+  const cardRows = `
+        <!-- Hero -->
+        <tr>
+          <td class="px hero" style="padding: 32px 24px 24px; font-family: ${SANS};">
+            ${eyebrow("Your week in review")}
+            <h1 class="h1 t-ink" style="margin: 14px 0 0; font-family: ${SERIF}; font-size: 28px; line-height: 1.2; font-weight: 400; letter-spacing: -0.4px; color: ${C.ink};">${escapeHtml(headline(props))}</h1>
+            <p class="t-muted" style="margin: 14px 0 0; font-size: 16px; line-height: 1.6; color: ${C.muted};">${intro(props)}</p>
+          </td>
+        </tr>
+        <tr><td class="px" style="padding: 0 24px;">${hairline()}</td></tr>
+        ${bookmarksSection}
+        ${itemsSection}
+        ${readingSection}
 
-          <!-- Masthead -->
-          <tr>
-            <td style="padding: 0 8px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td valign="middle" style="font-family: ${SANS};">
-                    <a href="${SITE}" style="text-decoration: none;">
-                      <img src="${SITE}/logo.png" width="28" height="28" alt="" style="vertical-align: middle; border: 0; border-radius: 7px;">
-                      <span style="margin-left: 8px; font-size: 16px; font-weight: 700; letter-spacing: -0.2px; color: ${C.ink}; vertical-align: middle;">Turbodoc</span>
-                    </a>
-                  </td>
-                  <td align="right" valign="middle" style="font-family: ${SANS}; font-size: 13px; color: ${C.faint}; white-space: nowrap;"><span class="hide-sm">Weekly digest · </span>${range}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+        <!-- Tip -->
+        <tr>
+          <td class="px" style="padding: 28px 24px 32px;">
+            ${hairline()}
+            <div class="t-muted" style="padding-top: 20px; font-family: ${SANS}; font-size: 14px; line-height: 1.6; color: ${C.muted};">
+              <strong class="t-ink" style="color: ${C.ink};">Tip:</strong> Connect Claude or Cursor to Turbodoc and let your AI assistant file links and notes for you. <a class="t-accent" href="${SITE}/mcp" style="color: ${C.accentText}; font-weight: 600; text-decoration: none;">Set it up in 2 minutes →</a>
+            </div>
+          </td>
+        </tr>`;
 
-          <!-- Card -->
-          <tr>
-            <td bgcolor="${C.card}" style="background-color: ${C.card}; border: 1px solid ${C.line}; border-radius: 16px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-
-                <!-- Hero -->
-                <tr>
-                  <td class="px hero" style="padding: 48px 48px 36px; font-family: ${SANS};">
-                    ${eyebrow("Your week in review")}
-                    <h1 class="h1" style="margin: 14px 0 0; font-family: ${SERIF}; font-size: 36px; line-height: 1.15; font-weight: 400; letter-spacing: -0.5px; color: ${C.ink};">${escapeHtml(headline(props))}</h1>
-                    <p style="margin: 14px 0 0; font-size: 16px; line-height: 1.6; color: ${C.muted};">${intro(props)}</p>
-                  </td>
-                </tr>
-                <tr><td class="px" style="padding: 0 48px;">${hairline()}</td></tr>
-
-                ${bookmarksSection}
-                ${itemsSection}
-                ${readingSection}
-
-                <!-- Tip -->
-                <tr>
-                  <td class="px" style="padding: ${readingSection ? "28px" : "36px"} 48px 48px;">
-                    ${hairline()}
-                    <div style="padding-top: 24px; font-family: ${SANS}; font-size: 14px; line-height: 1.6; color: ${C.muted};">
-                      <strong style="color: ${C.ink};">Tip:</strong> Connect Claude or Cursor to Turbodoc and let your AI assistant file links and notes for you. <a href="${SITE}/mcp" style="color: ${C.accentText}; font-weight: 600; text-decoration: none;">Set it up in 2 minutes →</a>
-                    </div>
-                  </td>
-                </tr>
-
-              </table>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td align="center" style="padding: 28px 8px 0; font-family: ${SANS}; font-size: 12px; line-height: 1.7; color: ${C.faint};">
-              You're getting this because your weekly digest is on.${scheduleSentence(props.schedule)}<br>
-              <a href="${DIGEST_SETTINGS_URL}" style="color: ${C.muted}; text-decoration: underline;">Change delivery day</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="${DIGEST_SETTINGS_URL}" style="color: ${C.muted}; text-decoration: underline;">Unsubscribe</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="${SITE}" style="color: ${C.muted}; text-decoration: underline;">turbodoc.ai</a>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+  return renderLayout({
+    title: "Your week in Turbodoc",
+    preheader,
+    mastheadLabel: `<span class="show-lg" style="display: none;">Weekly digest · </span>${range}`,
+    cardRows,
+    footer: `You're getting this because your weekly digest is on.${scheduleSentence(props.schedule)}<br>
+              ${footerLink("Change delivery day", DIGEST_SETTINGS_URL)}&nbsp;&nbsp;·&nbsp;&nbsp;${footerLink("Unsubscribe", DIGEST_SETTINGS_URL)}&nbsp;&nbsp;·&nbsp;&nbsp;${footerLink("turbodoc.ai", SITE)}`,
+  });
 }
 
 /** Plain-text alternative for clients that don't render HTML. */
