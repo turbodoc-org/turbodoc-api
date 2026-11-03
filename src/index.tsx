@@ -43,6 +43,7 @@ import { GetUserStats } from "./endpoints/v1/users/getUserStats";
 import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences";
 import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
 import { sendDueDigests } from "./scheduled/send-digests";
+import { checkBookmarkLinks } from "./scheduled/check-links";
 import { handleMcpRequest } from "./mcp/server";
 import { oauthAuthenticateHeader, protectedResourceMetadata } from "./utils/auth/oauth";
 import type { AppEnv } from "./types/app-context";
@@ -247,5 +248,6 @@ export default {
   fetch: app.fetch,
   async scheduled(controller: ScheduledController, env: Cloudflare.Env, ctx: ExecutionContext) {
     ctx.waitUntil(sendDueDigests(env));
+    ctx.waitUntil(checkBookmarkLinks(env));
   },
 } satisfies ExportedHandler<Cloudflare.Env>;

@@ -15,6 +15,11 @@ export class GetBookmarks extends OpenAPIRoute {
           .optional()
           .default("all")
           .describe("Filter by status"),
+        link_status: z
+          .enum(["all", "ok", "broken", "unknown"])
+          .optional()
+          .default("all")
+          .describe("Filter by link health (broken = failed two consecutive checks)"),
         is_favorite: z.string().optional().describe("Filter by favorite status (true/false)"),
         tag: z.string().optional().describe("Filter by specific tag"),
         days: z.string().optional().describe("Filter by added in last N days"),
@@ -46,6 +51,21 @@ export class GetBookmarks extends OpenAPIRoute {
                         is_favorite: z
                           .boolean()
                           .describe("Whether the bookmark is marked as favorite"),
+                        link_status: z
+                          .enum(["unknown", "ok", "broken"])
+                          .describe("Link health from the broken link checker"),
+                        link_status_code: z
+                          .number()
+                          .nullable()
+                          .describe("HTTP status from the last link check"),
+                        link_error: z
+                          .string()
+                          .nullable()
+                          .describe("Network error from the last link check, e.g. 'Timed out'"),
+                        link_checked_at: z
+                          .string()
+                          .nullable()
+                          .describe("ISO timestamp of the last link check"),
                         created_at: z
                           .string()
                           .nullable()
@@ -83,13 +103,25 @@ export class GetBookmarks extends OpenAPIRoute {
       const authToken = c.get("authToken");
       const supabase = supabaseApiClient(authToken, c);
 
-      const { status = "all", is_favorite, tag, days, sort = "date_newest" } = c.req.query();
+      const {
+        status = "all",
+        link_status = "all",
+        is_favorite,
+        tag,
+        days,
+        sort = "date_newest",
+      } = c.req.query();
 
       let query = supabase.from("bookmarks").select("*").eq("user_id", user.id);
 
       // Apply status filter
       if (status !== "all") {
         query = query.eq("status", status);
+      }
+
+      // Apply link health filter
+      if (link_status !== "all") {
+        query = query.eq("link_status", link_status);
       }
 
       // Apply favorite filter

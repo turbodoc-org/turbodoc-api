@@ -15,6 +15,11 @@ export type Database = {
           created_at: string | null;
           id: string;
           is_favorite: boolean | null;
+          link_checked_at: string | null;
+          link_error: string | null;
+          link_failure_count: number;
+          link_status: string;
+          link_status_code: number | null;
           status: string;
           summary: string | null;
           synced_at: string | null;
@@ -32,6 +37,11 @@ export type Database = {
           created_at?: string | null;
           id?: string;
           is_favorite?: boolean | null;
+          link_checked_at?: string | null;
+          link_error?: string | null;
+          link_failure_count?: number;
+          link_status?: string;
+          link_status_code?: number | null;
           status?: string;
           summary?: string | null;
           synced_at?: string | null;
@@ -49,6 +59,11 @@ export type Database = {
           created_at?: string | null;
           id?: string;
           is_favorite?: boolean | null;
+          link_checked_at?: string | null;
+          link_error?: string | null;
+          link_failure_count?: number;
+          link_status?: string;
+          link_status_code?: number | null;
           status?: string;
           summary?: string | null;
           synced_at?: string | null;
@@ -294,7 +309,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      bookmark_link_only_update: {
+        Args: {
+          new_row: Database["public"]["Tables"]["bookmarks"]["Row"];
+          old_row: Database["public"]["Tables"]["bookmarks"]["Row"];
+        };
+        Returns: boolean;
+      };
+      record_bookmark_link_checks: { Args: { results: Json }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;

@@ -1,6 +1,7 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from "cloudflare:workers";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../types/database.types";
+import { checkLink, recordLinkChecks } from "../utils/links/check-link";
 
 export type BookmarkWorkflowParams = {
   bookmarkId: string;
@@ -20,6 +21,17 @@ export class BookmarkWorkflow extends WorkflowEntrypoint<Cloudflare.Env, Bookmar
   async run(event: Readonly<WorkflowEvent<BookmarkWorkflowParams>>, step: WorkflowStep) {
     const { bookmarkId, url } = event.payload;
     const supabase = createClient<Database>(this.env.SUPABASE_URL, this.env.SUPABASE_SECRET_KEY);
+
+    // First link check for a new (or re-pointed) bookmark. Best-effort: it must
+    // never block summarisation; the weekly cron picks up anything missed here.
+    await step.do("check-link", async () => {
+      try {
+        const result = await checkLink(url);
+        if (result) await recordLinkChecks(supabase, [{ id: bookmarkId, url, ...result }]);
+      } catch (error) {
+        console.error(`Link check failed for ${bookmarkId}:`, error);
+      }
+    });
 
     await step.do("mark-processing", async () => {
       const { error } = await supabase

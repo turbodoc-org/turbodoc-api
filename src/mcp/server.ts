@@ -37,6 +37,11 @@ const EmptySchema = z.object({});
 
 const ListBookmarksSchema = z.object({
   status: z.enum(["all", "unread", "read", "archived"]).optional().default("all"),
+  link_status: z
+    .enum(["all", "ok", "broken", "unknown"])
+    .optional()
+    .default("all")
+    .describe("Filter by link health; 'broken' finds dead links"),
   is_favorite: z.boolean().optional(),
   tag: z.string().optional(),
   days: z.number().int().positive().optional(),
@@ -363,11 +368,13 @@ const createToolDefinitions = (ctx: ToolContext) => {
     defineTool({
       name: "list_bookmarks",
       title: "List bookmarks",
-      description: "List bookmarks for the authenticated user with REST API filters.",
+      description:
+        "List bookmarks for the authenticated user with REST API filters. Each bookmark has a link_status (ok/broken/unknown) from the weekly broken link checker.",
       schema: ListBookmarksSchema,
       async handler(input, { supabase, userId }) {
         let query = supabase.from("bookmarks").select("*").eq("user_id", userId);
         if (input.status !== "all") query = query.eq("status", input.status);
+        if (input.link_status !== "all") query = query.eq("link_status", input.link_status);
         if (input.is_favorite === true) query = query.eq("is_favorite", true);
         if (input.tag) query = query.ilike("tags", `%${input.tag}%`);
         if (input.days) {
