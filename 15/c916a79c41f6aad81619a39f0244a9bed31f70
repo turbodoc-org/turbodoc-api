@@ -1,0 +1,35 @@
+src/endpoints/v1/bookmarks/getBookmarks.ts
+  s_25e3ecad1a81ed::t_7d413ca3b72341 18-22,54-68,106-113,122-126
+src/index.tsx
+  s_25e3ecad1a81ed::t_205ecebc0ea246 46,251
+src/mcp/server.ts
+  s_25e3ecad1a81ed::t_60b5e4602e479b 40-44,371-372,377
+src/scheduled/check-links.ts
+  s_25e3ecad1a81ed::t_6549c4cce573a6 1-63
+src/types/database.types.ts
+  s_25e3ecad1a81ed::t_6bfa8850725c3c 18-22,40-44,62-66,312-319
+src/utils/links/check-link.test.ts
+  s_25e3ecad1a81ed::t_7310b5dbbbdbc5 1-77
+src/utils/links/check-link.ts
+  s_25e3ecad1a81ed::t_b8da5360407b00 1-125
+src/workflows/bookmark-workflow.ts
+  s_25e3ecad1a81ed::t_ea09beee78386f 4,25-35
+supabase/migrations/20261103120000_add_bookmark_link_health.sql
+  s_25e3ecad1a81ed::t_d7bee4584655ec 1-137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "15c916a79c41f6aad81619a39f0244a9bed31f70",
+  "prompts": {},
+  "sessions": {
+    "s_25e3ecad1a81ed": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_25e3ecad1a81ed",
+        "model": "unknown"
+      },
+      "human_author": "Nico Botha <nicolaasb@pm.me>"
+    }
+  }
+}
