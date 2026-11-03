@@ -1,0 +1,25 @@
+src/emails/contact-email-template.ts
+  s_d55f4e2acd1ab0::t_37dfd5609b270e 1-12,24-25,40-63,65-70
+src/emails/digest-email-template.ts
+  s_d55f4e2acd1ab0::t_b0d11c8d9708b5 36-49,197-201,206-208,213-216,219-220,222-225,233-234,256-273,277,280-281,298-299,311-318,325-338,341-372
+src/emails/email-assets.ts
+  s_d55f4e2acd1ab0::t_7c8ef089ebdcb2 1-2,4,12-17
+src/emails/email-layout.ts
+  s_d55f4e2acd1ab0::t_38bc2bb582bf1a 1-230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "08fc1e987ea5eb69bccc53e86b3254ba1ce1569b",
+  "prompts": {},
+  "sessions": {
+    "s_d55f4e2acd1ab0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_d55f4e2acd1ab0",
+        "model": "unknown"
+      },
+      "human_author": "Nico Botha <nicolaasb@pm.me>"
+    }
+  }
+}
