@@ -1,0 +1,37 @@
+package.json
+  s_d459b38cecdce5::t_fe513f3ba67d3d 21
+pnpm-lock.yaml
+  s_d459b38cecdce5::t_9da3f32fd397aa 33-35,1586-1589,3185-3186
+src/endpoints/v1/notes/updateNote.ts
+  s_d459b38cecdce5::t_40fb2c33cdbab0 6,142-147,153-161,163,165-167,170
+src/endpoints/v2/documents.ts
+  s_d459b38cecdce5::t_8b5f3f2915c88a 6-11,24-26,30,71-73,77,79-82,84-85,87-95,103-104,112-134,161-162,195-196
+src/mcp/server.ts
+  s_d459b38cecdce5::t_2fffce3b568972 9,91-92,94-97,99-105,321-326,330-353,585-586,660
+src/types/database.types.ts
+  s_d459b38cecdce5::t_6dfb34486e0d6d 214,216,218-219,231,233,235-236,248,250,252-253,266-279,290,306,322
+src/utils/documents/merge.test.ts
+  s_d459b38cecdce5::t_55eecb0b0402ab 1-120
+src/utils/documents/merge.ts
+  s_d459b38cecdce5::t_72ff4165584083 1-2,10-23,27-28,32-34,36-43,45-53,55-59,61-62,64-112,114-115,122-123,125-131
+src/utils/documents/save.ts
+  s_d459b38cecdce5::t_85ee77c8c2fb4b 1-309
+supabase/migrations/20261104120000_document_revision_graph.sql
+  s_d459b38cecdce5::t_67f567054b4e6d 1-158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "da72e3aa8b3b9f385109e43cc7f00d198fbd27d4",
+  "prompts": {},
+  "sessions": {
+    "s_d459b38cecdce5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_d459b38cecdce5",
+        "model": "unknown"
+      },
+      "human_author": "Nico Botha <nicolaasb@pm.me>"
+    }
+  }
+}
