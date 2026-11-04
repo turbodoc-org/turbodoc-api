@@ -335,6 +335,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      prune_document_revisions: {
+        Args: { p_limit?: number };
+        Returns: number;
+      };
       bookmark_link_only_update: {
         Args: {
           new_row: Database["public"]["Tables"]["bookmarks"]["Row"];

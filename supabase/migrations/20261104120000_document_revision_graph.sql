@@ -156,3 +156,49 @@ BEGIN
   END IF;
 END;
 $$;
+
+-- 5. Revision retention -------------------------------------------------------
+-- Autosave records a revision per pause in typing. Revisions from the last 30
+-- days are all kept: clients use them as merge bases, and a base that no
+-- longer exists cannot be merged against. Older history is thinned to the
+-- last revision per document per day; named and restore revisions, and every
+-- current head, are kept forever. Submitted snapshots are only merge bases and
+-- are dropped after 30 days. Called hourly by the API's scheduled handler.
+
+CREATE INDEX IF NOT EXISTS document_revisions_created_idx
+  ON document_revisions(created_at);
+
+CREATE OR REPLACE FUNCTION public.prune_document_revisions(p_limit integer DEFAULT 5000)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  deleted integer;
+BEGIN
+  WITH old_revisions AS (
+    SELECT r.id, r.kind,
+           row_number() OVER (
+             PARTITION BY r.document_id, r.kind = 'submitted', date_trunc('day', r.created_at)
+             ORDER BY r.created_at DESC, r.revision_number DESC NULLS LAST
+           ) AS newest_first
+    FROM document_revisions r
+    WHERE r.created_at < now() - interval '30 days'
+      AND r.name IS NULL
+      AND r.kind IN ('edit', 'merge', 'submitted')
+      AND NOT EXISTS (SELECT 1 FROM notes n WHERE n.head_revision_id = r.id)
+  )
+  DELETE FROM document_revisions
+  WHERE id IN (
+    SELECT id FROM old_revisions
+    WHERE kind = 'submitted' OR newest_first > 1
+    LIMIT p_limit
+  );
+  GET DIAGNOSTICS deleted = ROW_COUNT;
+  RETURN deleted;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.prune_document_revisions(integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.prune_document_revisions(integer) TO service_role;

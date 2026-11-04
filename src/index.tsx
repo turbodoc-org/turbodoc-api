@@ -44,6 +44,7 @@ import { GetDigestPreferences } from "./endpoints/v1/digest/getDigestPreferences
 import { UpdateDigestPreferences } from "./endpoints/v1/digest/updateDigestPreferences";
 import { sendDueDigests } from "./scheduled/send-digests";
 import { checkBookmarkLinks } from "./scheduled/check-links";
+import { pruneDocumentRevisions } from "./scheduled/prune-revisions";
 import { handleMcpRequest } from "./mcp/server";
 import { oauthAuthenticateHeader, protectedResourceMetadata } from "./utils/auth/oauth";
 import type { AppEnv } from "./types/app-context";
@@ -249,5 +250,9 @@ export default {
   async scheduled(controller: ScheduledController, env: Cloudflare.Env, ctx: ExecutionContext) {
     ctx.waitUntil(sendDueDigests(env));
     ctx.waitUntil(checkBookmarkLinks(env));
+    // The cron fires every 15 minutes; history cleanup only needs to run hourly.
+    if (new Date(controller.scheduledTime).getUTCMinutes() < 15) {
+      ctx.waitUntil(pruneDocumentRevisions(env));
+    }
   },
 } satisfies ExportedHandler<Cloudflare.Env>;
