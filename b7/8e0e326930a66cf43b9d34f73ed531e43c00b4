@@ -1,0 +1,19 @@
+supabase/migrations/20261104120000_document_revision_graph.sql
+  s_7d81f84215f744::t_9b7f746d12e71f 38-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b78e0e326930a66cf43b9d34f73ed531e43c00b4",
+  "prompts": {},
+  "sessions": {
+    "s_7d81f84215f744": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_7d81f84215f744",
+        "model": "unknown"
+      },
+      "human_author": "Nico Botha <nicolaasb@pm.me>"
+    }
+  }
+}
