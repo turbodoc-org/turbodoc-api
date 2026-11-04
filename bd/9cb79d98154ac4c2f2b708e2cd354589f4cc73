@@ -1,0 +1,25 @@
+src/index.tsx
+  s_cd7e4879e15a24::t_2cb78335860a91 47,253-256
+src/scheduled/prune-revisions.ts
+  s_cd7e4879e15a24::t_bb3c4ff8ca8529 1-27
+src/types/database.types.ts
+  s_cd7e4879e15a24::t_b54d86dcf1db3f 338-341
+supabase/migrations/20261104120000_document_revision_graph.sql
+  s_cd7e4879e15a24::t_b6700fa64162ed 159-204
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bd9cb79d98154ac4c2f2b708e2cd354589f4cc73",
+  "prompts": {},
+  "sessions": {
+    "s_cd7e4879e15a24": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_cd7e4879e15a24",
+        "model": "unknown"
+      },
+      "human_author": "Nico Botha <nicolaasb@pm.me>"
+    }
+  }
+}
