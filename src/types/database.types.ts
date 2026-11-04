@@ -211,9 +211,12 @@ export type Database = {
           document_id: string;
           id: string;
           is_favorite: boolean;
+          kind: string;
           markdown: string;
+          merge_parent_id: string | null;
           name: string | null;
-          revision_number: number;
+          parent_revision_id: string | null;
+          revision_number: number | null;
           tags: string | null;
           title: string;
           user_id: string;
@@ -225,9 +228,12 @@ export type Database = {
           document_id: string;
           id?: string;
           is_favorite?: boolean;
+          kind?: string;
           markdown?: string;
+          merge_parent_id?: string | null;
           name?: string | null;
-          revision_number: number;
+          parent_revision_id?: string | null;
+          revision_number?: number | null;
           tags?: string | null;
           title?: string;
           user_id: string;
@@ -239,9 +245,12 @@ export type Database = {
           document_id?: string;
           id?: string;
           is_favorite?: boolean;
+          kind?: string;
           markdown?: string;
+          merge_parent_id?: string | null;
           name?: string | null;
-          revision_number?: number;
+          parent_revision_id?: string | null;
+          revision_number?: number | null;
           tags?: string | null;
           title?: string;
           user_id?: string;
@@ -254,6 +263,20 @@ export type Database = {
             referencedRelation: "notes";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "document_revisions_merge_parent_id_fkey";
+            columns: ["merge_parent_id"];
+            isOneToOne: false;
+            referencedRelation: "document_revisions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "document_revisions_parent_revision_id_fkey";
+            columns: ["parent_revision_id"];
+            isOneToOne: false;
+            referencedRelation: "document_revisions";
+            referencedColumns: ["id"];
+          },
         ];
       };
       notes: {
@@ -264,6 +287,7 @@ export type Database = {
           id: string;
           is_favorite: boolean | null;
           last_edited_by_device: string | null;
+          revision_meta: Json | null;
           schema_version: number;
           synced_at: string | null;
           tags: string | null;
@@ -279,6 +303,7 @@ export type Database = {
           id?: string;
           is_favorite?: boolean | null;
           last_edited_by_device?: string | null;
+          revision_meta?: Json | null;
           schema_version?: number;
           synced_at?: string | null;
           tags?: string | null;
@@ -294,6 +319,7 @@ export type Database = {
           id?: string;
           is_favorite?: boolean | null;
           last_edited_by_device?: string | null;
+          revision_meta?: Json | null;
           schema_version?: number;
           synced_at?: string | null;
           tags?: string | null;

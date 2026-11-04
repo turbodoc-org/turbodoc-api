@@ -2,9 +2,13 @@ import { OpenAPIRoute } from "chanfana";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import type { AppContext } from "../../types/app-context";
-import type { Database } from "../../types/database.types";
 import { supabaseApiClient } from "../../utils/clients/supabase/api";
-import { mergeDocument, type DocumentSnapshot } from "../../utils/documents/merge";
+import {
+  createDocument,
+  restoreDocumentRevision,
+  saveDocument,
+  type NoteRow,
+} from "../../utils/documents/save";
 
 const documentInput = z.object({
   title: z.string().optional(),
@@ -17,56 +21,15 @@ const documentInput = z.object({
   revision_name: z.string().max(200).optional(),
 });
 
-const snapshot = (value: {
-  title: string;
-  content: string;
-  tags: string | null;
-  is_favorite: boolean | null;
-}): DocumentSnapshot => ({
-  title: value.title,
-  markdown: value.content,
-  tags: value.tags,
-  is_favorite: value.is_favorite ?? false,
+const createDocumentInput = documentInput.extend({
+  /** Client-generated ID, so an offline create can be replayed safely. */
+  id: z.string().uuid().optional(),
 });
 
-type NoteRow = Database["public"]["Tables"]["notes"]["Row"];
-
 const asDocument = (note: NoteRow) => {
-  const { content, ...metadata } = note;
+  const { content, revision_meta: _revisionMeta, ...metadata } = note;
   return { ...metadata, markdown: content };
 };
-
-async function addRevision(
-  supabase: ReturnType<typeof supabaseApiClient>,
-  userId: string,
-  document: Database["public"]["Tables"]["notes"]["Row"],
-  metadata: { device_id?: string; change_summary?: string; revision_name?: string },
-) {
-  const revision: Database["public"]["Tables"]["document_revisions"]["Insert"] = {
-    document_id: document.id,
-    user_id: userId,
-    revision_number: document.version,
-    title: document.title,
-    markdown: document.content,
-    tags: document.tags,
-    is_favorite: document.is_favorite ?? false,
-    device_id: metadata.device_id,
-    change_summary: metadata.change_summary,
-    name: metadata.revision_name,
-  };
-  const { data, error } = await supabase
-    .from("document_revisions")
-    .insert(revision)
-    .select()
-    .single();
-  if (error) throw new HTTPException(500, { message: "Failed to create revision" });
-  await supabase
-    .from("notes")
-    .update({ head_revision_id: data.id })
-    .eq("id", document.id)
-    .eq("user_id", userId);
-  return data;
-}
 
 export class ListDocuments extends OpenAPIRoute {
   static schema = { tags: ["Documents"], summary: "List Markdown documents" };
@@ -105,29 +68,31 @@ export class CreateDocument extends OpenAPIRoute {
   static schema = {
     tags: ["Documents"],
     summary: "Create a Markdown document",
-    request: { body: { content: { "application/json": { schema: documentInput } } } },
+    description:
+      "Pass a client-generated `id` to make the create idempotent: replaying it returns the existing document with status 200.",
+    request: { body: { content: { "application/json": { schema: createDocumentInput } } } },
   };
   async handle(c: AppContext) {
     const user = c.get("user");
-    const input = documentInput.parse(await c.req.json());
+    const input = createDocumentInput.parse(await c.req.json());
     const supabase = supabaseApiClient(c.get("authToken"), c);
-    const { data, error } = await supabase
-      .from("notes")
-      .insert({
-        user_id: user.id,
+    const { note, created } = await createDocument(
+      supabase,
+      user.id,
+      {
         title: input.title ?? "",
-        content: input.markdown ?? "",
-        tags: input.tags,
+        markdown: input.markdown ?? "",
+        tags: input.tags ?? null,
         is_favorite: input.is_favorite ?? false,
-        version: 1,
-        schema_version: 1,
-        last_edited_by_device: input.device_id,
-      })
-      .select()
-      .single();
-    if (error || !data) throw new HTTPException(500, { message: "Failed to create document" });
-    const revision = await addRevision(supabase, user.id, data, input);
-    return c.json({ data: { ...asDocument(data), head_revision_id: revision.id } }, 201);
+      },
+      {
+        id: input.id,
+        deviceId: input.device_id,
+        changeSummary: input.change_summary,
+        revisionName: input.revision_name,
+      },
+    );
+    return c.json({ data: asDocument(note) }, created ? 201 : 200);
   }
 }
 
@@ -135,6 +100,8 @@ export class UpdateDocument extends OpenAPIRoute {
   static schema = {
     tags: ["Documents"],
     summary: "Update and automatically merge a Markdown document",
+    description:
+      "Send `base_revision_id`: the head revision your edits started from. If the document changed since, your changes are merged with the newer ones instead of replacing them. The response includes `merged`, `conflicts` (hunks where both versions were kept) and `submitted_revision_id`: use it as your next `base_revision_id` if you kept editing while this request was in flight; otherwise adopt the returned document and use its `head_revision_id`.",
     request: { body: { content: { "application/json": { schema: documentInput } } } },
   };
   async handle(c: AppContext) {
@@ -142,66 +109,29 @@ export class UpdateDocument extends OpenAPIRoute {
     const input = documentInput.parse(await c.req.json());
     const supabase = supabaseApiClient(c.get("authToken"), c);
     const { id } = c.req.param();
-    const { data: current, error } = await supabase
-      .from("notes")
-      .select("*")
-      .eq("id", id!)
-      .eq("user_id", user.id)
-      .single();
-    if (error || !current) throw new HTTPException(404, { message: "Document not found" });
-
-    const remote = snapshot(current);
-    let next: DocumentSnapshot = {
-      title: input.title ?? remote.title,
-      markdown: input.markdown ?? remote.markdown,
-      tags: input.tags === undefined ? remote.tags : input.tags,
-      is_favorite: input.is_favorite ?? remote.is_favorite,
-    };
-    let merged = false;
-    if (input.base_revision_id && input.base_revision_id !== current.head_revision_id) {
-      const { data: base } = await supabase
-        .from("document_revisions")
-        .select("*")
-        .eq("id", input.base_revision_id)
-        .eq("document_id", id!)
-        .eq("user_id", user.id)
-        .single();
-      if (base) {
-        next = mergeDocument(
-          {
-            title: base.title,
-            markdown: base.markdown,
-            tags: base.tags,
-            is_favorite: base.is_favorite,
-          },
-          next,
-          remote,
-        );
-        merged = true;
-      }
-    }
-
-    const nextVersion = current.version + 1;
-    const { data: updated, error: updateError } = await supabase
-      .from("notes")
-      .update({
-        title: next.title,
-        content: next.markdown,
-        tags: next.tags,
-        is_favorite: next.is_favorite,
-        version: nextVersion,
-        last_edited_by_device: input.device_id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id!)
-      .eq("user_id", user.id)
-      .eq("version", current.version)
-      .select()
-      .single();
-    if (updateError || !updated)
-      throw new HTTPException(409, { message: "Concurrent update; retry with latest head" });
-    const revision = await addRevision(supabase, user.id, updated, input);
-    return c.json({ data: { ...asDocument(updated), head_revision_id: revision.id }, merged });
+    const result = await saveDocument(
+      supabase,
+      user.id,
+      id!,
+      {
+        title: input.title,
+        markdown: input.markdown,
+        tags: input.tags,
+        is_favorite: input.is_favorite,
+      },
+      {
+        baseRevisionId: input.base_revision_id,
+        deviceId: input.device_id,
+        changeSummary: input.change_summary,
+        revisionName: input.revision_name,
+      },
+    );
+    return c.json({
+      data: asDocument(result.note),
+      merged: result.merged,
+      conflicts: result.conflicts,
+      submitted_revision_id: result.submittedRevisionId,
+    });
   }
 }
 
@@ -228,6 +158,8 @@ export class ListDocumentRevisions extends OpenAPIRoute {
       .select("*")
       .eq("document_id", id!)
       .eq("user_id", user.id)
+      // Submitted snapshots are merge bases, not points in the history.
+      .neq("kind", "submitted")
       .order("revision_number", { ascending: false });
     if (error) throw new HTTPException(500, { message: "Failed to list revisions" });
     return c.json({ data });
@@ -260,42 +192,7 @@ export class RestoreDocumentRevision extends OpenAPIRoute {
     const user = c.get("user");
     const supabase = supabaseApiClient(c.get("authToken"), c);
     const { id, revisionId } = c.req.param();
-    const { data: revision, error } = await supabase
-      .from("document_revisions")
-      .select("*")
-      .eq("id", revisionId!)
-      .eq("document_id", id!)
-      .eq("user_id", user.id)
-      .single();
-    if (error || !revision) throw new HTTPException(404, { message: "Revision not found" });
-    const { data: current } = await supabase
-      .from("notes")
-      .select("*")
-      .eq("id", id!)
-      .eq("user_id", user.id)
-      .single();
-    if (!current) throw new HTTPException(404, { message: "Document not found" });
-    const { data: restored, error: restoreError } = await supabase
-      .from("notes")
-      .update({
-        title: revision.title,
-        content: revision.markdown,
-        tags: revision.tags,
-        is_favorite: revision.is_favorite,
-        version: current.version + 1,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id!)
-      .eq("user_id", user.id)
-      .eq("version", current.version)
-      .select()
-      .single();
-    if (restoreError || !restored)
-      throw new HTTPException(409, { message: "Document changed during restore" });
-    const newRevision = await addRevision(supabase, user.id, restored, {
-      change_summary: `Restored revision ${revision.revision_number}`,
-      revision_name: `Restore of ${revision.name ?? `v${revision.revision_number}`}`,
-    });
-    return c.json({ data: { ...asDocument(restored), head_revision_id: newRevision.id } });
+    const restored = await restoreDocumentRevision(supabase, user.id, id!, revisionId!);
+    return c.json({ data: asDocument(restored) });
   }
 }

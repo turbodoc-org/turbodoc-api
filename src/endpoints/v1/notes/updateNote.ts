@@ -2,8 +2,8 @@ import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
 import { AppContext } from "../../../types/app-context";
 import { HTTPException } from "hono/http-exception";
-import { Database } from "../../../types/database.types";
 import { supabaseApiClient } from "../../../utils/clients/supabase/api";
+import { DocumentVersionConflict, saveDocument } from "../../../utils/documents/save";
 
 export class UpdateNote extends OpenAPIRoute {
   static schema = {
@@ -139,84 +139,35 @@ export class UpdateNote extends OpenAPIRoute {
 
       const { title, content, tags, is_favorite, version } = body;
 
-      // If version is provided, check for conflicts first
-      if (version !== undefined) {
-        const { data: currentNote, error: fetchError } = await supabase
-          .from("notes")
-          .select("*")
-          .eq("id", id)
-          .eq("user_id", user.id)
-          .single();
-
-        if (fetchError) {
-          if (fetchError.code === "PGRST116") {
-            throw new HTTPException(404, { message: "Note not found" });
-          }
-          throw new HTTPException(500, {
-            message: "Failed to fetch current note",
-          });
-        }
-
-        // Check version conflict
-        if (currentNote.version !== version) {
-          throw new HTTPException(409, {
-            message: "Version conflict - note was modified by another client",
-            cause: { data: currentNote },
-          });
-        }
-      }
-
-      // Build update object with only provided fields
-      const updateNote: Database["public"]["Tables"]["notes"]["Update"] = {};
-
-      if (title !== undefined) updateNote.title = title;
-      if (content !== undefined) updateNote.content = content;
-      if (tags !== undefined) updateNote.tags = tags;
-      if (is_favorite !== undefined) updateNote.is_favorite = is_favorite;
-
-      // Increment version on every update
-      if (version !== undefined) {
-        updateNote.version = version + 1;
-      }
-
-      // Check if there's anything to update
-      if (Object.keys(updateNote).length === 0) {
+      if (
+        title === undefined &&
+        content === undefined &&
+        tags === undefined &&
+        is_favorite === undefined
+      ) {
         throw new HTTPException(400, {
           message: "No fields provided to update",
         });
       }
 
-      const { data, error } = await supabase
-        .from("notes")
-        .update(updateNote)
-        .eq("id", id)
-        .eq("user_id", user.id)
-        .select()
-        .single();
+      // The version check and the write happen atomically; every content change
+      // records a revision so v2 clients can merge with it.
+      const { note } = await saveDocument(
+        supabase,
+        user.id,
+        id,
+        { title, markdown: content, tags, is_favorite },
+        { expectedVersion: version },
+      );
 
-      if (error) {
-        console.error("Error updating note:", error);
-        if (error.code === "PGRST116") {
-          throw new HTTPException(404, { message: "Note not found" });
-        }
-        throw new HTTPException(500, { message: "Failed to update note" });
-      }
-
-      return c.json({ data });
+      return c.json({ data: note });
     } catch (error) {
+      if (error instanceof DocumentVersionConflict) {
+        return c.json({ status: 409, message: error.message, data: error.current }, 409);
+      }
       console.error("Error in UpdateNote:", error);
       if (error instanceof HTTPException) {
-        // Handle 409 conflict specially to include current note data
-        if (error.status === 409 && error.cause) {
-          return c.json(
-            {
-              status: 409,
-              message: error.message,
-              data: (error.cause as any).data,
-            },
-            409,
-          );
-        }
+        if (error.status === 404) throw new HTTPException(404, { message: "Note not found" });
         throw error;
       }
       throw new HTTPException(500, { message: "Internal server error" });
