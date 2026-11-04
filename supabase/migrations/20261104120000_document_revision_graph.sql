@@ -35,6 +35,12 @@ COMMENT ON COLUMN document_revisions.merge_parent_id IS
 COMMENT ON COLUMN document_revisions.kind IS
   'edit | merge | restore | submitted (unmerged client snapshot, used as a merge base).';
 
+-- Used by revision retention (section 5). Created here because Postgres
+-- refuses DDL on a table with pending deferred-constraint checks, which the
+-- backfill below queues on document_revisions.
+CREATE INDEX IF NOT EXISTS document_revisions_created_idx
+  ON document_revisions(created_at);
+
 -- The revision row is inserted before the note row on INSERT, so the document
 -- FK is checked at commit time.
 ALTER TABLE document_revisions
@@ -164,9 +170,6 @@ $$;
 -- last revision per document per day; named and restore revisions, and every
 -- current head, are kept forever. Submitted snapshots are only merge bases and
 -- are dropped after 30 days. Called hourly by the API's scheduled handler.
-
-CREATE INDEX IF NOT EXISTS document_revisions_created_idx
-  ON document_revisions(created_at);
 
 CREATE OR REPLACE FUNCTION public.prune_document_revisions(p_limit integer DEFAULT 5000)
 RETURNS integer
