@@ -6,6 +6,7 @@ import { HTTPException } from "hono/http-exception";
 import { AppContext } from "../types/app-context";
 import { Database, Json } from "../types/database.types";
 import { supabaseApiClient } from "../utils/clients/supabase/api";
+import { DocumentVersionConflict, saveDocument } from "../utils/documents/save";
 import { enqueueBookmarkWorkflow } from "../utils/workflows/enqueue-bookmark";
 
 type ToolContext = {
@@ -87,9 +88,21 @@ const NoteInputSchema = z.object({
   is_favorite: z.boolean().optional(),
 });
 
-const UpdateNoteSchema = NoteInputSchema.partial().extend({
+// No defaults: an omitted field must stay unchanged, not be reset to "".
+const UpdateNoteSchema = z.object({
   id: z.string().min(1),
+  title: z.string().optional(),
+  content: z.string().optional(),
+  tags: z.string().optional(),
+  is_favorite: z.boolean().optional(),
   version: z.number().int().positive().optional(),
+  base_revision_id: z
+    .string()
+    .uuid()
+    .optional()
+    .describe(
+      "head_revision_id of the note you read. If the note changed since, your edit is merged with the newer changes instead of replacing them.",
+    ),
 });
 
 const CodeSnippetInputSchema = z.object({
@@ -305,41 +318,39 @@ const updateNote = async (
   input: z.output<typeof UpdateNoteSchema>,
   { supabase, userId }: ToolContext,
 ) => {
-  if (input.version !== undefined) {
-    const { data: currentNote, error } = await supabase
-      .from("notes")
-      .select("*")
-      .eq("id", input.id)
-      .eq("user_id", userId)
-      .single();
-    if (error || !currentNote) throw new HTTPException(404, { message: "Note not found" });
-    if (currentNote.version !== input.version) {
-      throw new HTTPException(409, {
-        message: "Version conflict - note was modified by another client",
-        cause: { data: currentNote },
-      });
-    }
-  }
-
-  const updateData: Database["public"]["Tables"]["notes"]["Update"] = {};
-  if (input.title !== undefined) updateData.title = input.title;
-  if (input.content !== undefined) updateData.content = input.content;
-  if (input.tags !== undefined) updateData.tags = input.tags;
-  if (input.is_favorite !== undefined) updateData.is_favorite = input.is_favorite;
-  if (input.version !== undefined) updateData.version = input.version + 1;
-  if (Object.keys(updateData).length === 0) {
+  if (
+    input.title === undefined &&
+    input.content === undefined &&
+    input.tags === undefined &&
+    input.is_favorite === undefined
+  ) {
     throw new HTTPException(400, { message: "No fields provided to update" });
   }
 
-  const { data, error } = await supabase
-    .from("notes")
-    .update(updateData)
-    .eq("id", input.id)
-    .eq("user_id", userId)
-    .select()
-    .single();
-  if (error || !data) throw new HTTPException(404, { message: "Note not found" });
-  return { data };
+  try {
+    const result = await saveDocument(
+      supabase,
+      userId,
+      input.id,
+      {
+        title: input.title,
+        markdown: input.content,
+        tags: input.tags,
+        is_favorite: input.is_favorite,
+      },
+      {
+        baseRevisionId: input.base_revision_id,
+        expectedVersion: input.version,
+        deviceId: "mcp",
+      },
+    );
+    return { data: result.note, merged: result.merged, conflicts: result.conflicts };
+  } catch (error) {
+    if (error instanceof DocumentVersionConflict) {
+      throw new HTTPException(409, { message: error.message, cause: { data: error.current } });
+    }
+    throw error;
+  }
 };
 
 const createToolDefinitions = (ctx: ToolContext) => {
@@ -571,7 +582,8 @@ const createToolDefinitions = (ctx: ToolContext) => {
     defineTool({
       name: "update_note",
       title: "Update note",
-      description: "Update a note. Pass version to enforce optimistic locking.",
+      description:
+        "Update a note. Omitted fields are left unchanged. Pass base_revision_id (the head_revision_id from get_note) so concurrent edits by the user are merged instead of overwritten, or version to fail on any concurrent change.",
       schema: UpdateNoteSchema,
       handler: updateNote,
     }),
@@ -645,6 +657,7 @@ const createToolDefinitions = (ctx: ToolContext) => {
           .select("*")
           .eq("document_id", document_id)
           .eq("user_id", userId)
+          .neq("kind", "submitted")
           .order("revision_number", { ascending: false });
         if (error) throw new HTTPException(500, { message: "Failed to list revisions" });
         return { data };
